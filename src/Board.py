@@ -58,3 +58,11 @@ class Board:
             raise ValueError(f"Level {self.level_number} has no 'board' definition")
 
         return [list(row) for row in board]
+    
+    def get(self , r , c):
+        return self.grid[r][c]
+    
+    def set (self , r , c , val):
+        self.grid[r][c]= val
+
+    
