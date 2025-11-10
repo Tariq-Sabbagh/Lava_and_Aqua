@@ -5,12 +5,11 @@ global board_info
 
 def print_board(grid):
     for row in grid:
-        for col in grid[row]:
-            print(grid[row][col])
-        print("\n")
+        print(" ".join(row))
+    print()
     
 def main():
-    level = int(input("please write the level you need to play"))
+    level = int(input("please write the level you need to play: "))
     board = Board(level)
 
     board_info = {
