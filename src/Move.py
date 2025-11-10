@@ -19,7 +19,7 @@ class Move:
 
     def player_move(self , key):
         r , c = self.player_pos
-        dr , dc = self.mapping.get(key.upper())
+        dr , dc = self.mapping.get(key.upper(),(0,0))
         nr , nc = r + dr , c + dc
         
         if not self.in_bounds(nr, nc):
@@ -33,6 +33,8 @@ class Move:
         self.grid[r][c] = "."
         self.grid[nr][nc] = "P"
         self.player_pos = (nr, nc)
+        self.board.player_positions.remove((r, c))
+        self.board.player_positions.add((nr, nc))
 
 
             
