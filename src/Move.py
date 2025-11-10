@@ -2,28 +2,40 @@ from src.Board import Board
 
 class Move:
     def __init__(self , board):
-        x_moves = [0 , 0 , 1 , -1]
-        y_moves = [1 , -1 , 0 , 0]
-        board_info = {
-        "grid": board.grid,
-        "rows": board.row,
-        "cols": board.col,
-        }
+        self.x_moves = [0 , 0 , 1 , -1]
+        self.y_moves = [1 , -1 , 0 , 0]
+        self.mapping = {
+        "W": (-1, 0),  
+        "A": (0, -1),  
+        "S": (1, 0),   
+        "D": (0, 1),   
+    }
+        self.board = board
+        self.grid = board.grid
+        self.rows, self.cols = board.row, board.col
 
-        player_pos = board.player_positions
+        self.player_pos = next(iter(board.player_positions)) 
 
 
     def player_move(self , key):
-        if key == "A":
-            if self.is_wall():
-                pass
-            else:
-                self.player_pos + self.y_moves[1]
-                
+        r , c = self.player_pos
+        dr , dc = self.mapping.get(key.upper())
+        nr , nc = r + dr , c + dc
+        
+        if not self.in_bounds(nr, nc):
+            print("blocked: out of bounds")
+            return False
+    
+        if self.is_wall(nr, nc):
+            print("blocked: wall")
+            return False
+        
+        self.grid[r][c] = "."
+        self.grid[nr][nc] = "P"
+        self.player_pos = (nr, nc)
+
 
             
 
-    def is_wall(self , r , c):
-        if self.grid[r][c] == "W":
-            return False
-        return True
+    def in_bounds(self , r, c): return 0 <= r < self.rows and 0 <= c < self.cols
+    def is_wall(self , r, c):   return self.grid[r][c] == "W"

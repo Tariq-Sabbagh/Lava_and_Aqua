@@ -65,5 +65,5 @@ class Board:
     def set (self , r , c , val):
         self.grid[r][c]= val
 
-    def getBoaed(self):
+    def getBoard(self):
         return self.grid

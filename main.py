@@ -1,4 +1,5 @@
 from src.Board import Board
+from src.Move import Move
 
 def print_board(grid):
     for row in grid:
@@ -17,8 +18,19 @@ def main():
 
     rows = board_info["rows"]
     cols = board_info["cols"]
-    # print_board(board_info["grid"])
-    # print(f"Player positions: {board.player_positions or 'not found'}")
+
+    m = Move(board)
+    print_board(board_info["grid"])
+    print(f"Player positions: {board.player_positions or 'not found'}")
+    m.player_move("A")
+    print_board(board_info["grid"])
+    print(f"Player positions: {board.player_positions or 'not found'}")
+    m.player_move("W")
+    print_board(board_info["grid"])
+    print(f"Player positions: {board.player_positions or 'not found'}")
+    m.player_move("D")
+    print_board(board_info["grid"])
+    print(f"Player positions: {board.player_positions or 'not found'}")
     # print(f"Goal positions: {board.goal_positions or 'not found'}")
     # print(f"Lava cells: {board.lava_positions or 'none'}")
     # print(f"Aqua cells: {board.aqua_positions or 'none'}")
