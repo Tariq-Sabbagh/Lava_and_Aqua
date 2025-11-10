@@ -28,7 +28,7 @@ def main():
     m.player_move("W")
     print_board(board.grid)
     print(f"Player positions: {board.player_positions or 'not found'}")
-    m.player_move("D")
+    m.player_move("W")
     print_board(board.grid)
     print(f"Player positions: {board.player_positions or 'not found'}")
     # print(f"Goal positions: {board.goal_positions or 'not found'}")

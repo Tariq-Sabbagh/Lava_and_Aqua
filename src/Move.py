@@ -36,8 +36,12 @@ class Move:
         self.board.player_positions.remove((r, c))
         self.board.player_positions.add((nr, nc))
 
+    # def lava_move(self):
+        
+
 
             
 
     def in_bounds(self , r, c): return 0 <= r < self.rows and 0 <= c < self.cols
     def is_wall(self , r, c):   return self.grid[r][c] == "W"
+    def is_goal(self , r , c): return self.grid[r][c] == "G"

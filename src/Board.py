@@ -67,3 +67,12 @@ class Board:
 
     def getBoard(self):
         return self.grid
+    
+    def getNeighbors(self , r , c):
+        return {
+            (r - 1 , c + 0),
+            (r + 1 , c + 0),
+            (r + 0 , c + 1),
+            (r + 0 , c - 1),
+
+        }
