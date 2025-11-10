@@ -1,8 +1,5 @@
 from src.Board import Board
 
-
-global board_info
-
 def print_board(grid):
     for row in grid:
         print(" ".join(row))
@@ -20,7 +17,12 @@ def main():
 
     rows = board_info["rows"]
     cols = board_info["cols"]
-    print_board(board_info["grid"])
+    # print_board(board_info["grid"])
+    # print(f"Player positions: {board.player_positions or 'not found'}")
+    # print(f"Goal positions: {board.goal_positions or 'not found'}")
+    # print(f"Lava cells: {board.lava_positions or 'none'}")
+    # print(f"Aqua cells: {board.aqua_positions or 'none'}")
+    # print(f"Box cells: {board.box_positions or 'none'}")
 
 if __name__ == '__main__':
     main()
