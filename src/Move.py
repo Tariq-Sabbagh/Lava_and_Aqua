@@ -111,10 +111,14 @@ class Actions:
         if tile in ("W", "B") or tile.isdigit():
             return Result(ok=False, status="blocked", reason="box_blocked")
 
-        neutralized = False
+        neutralized_lava = False
+        neutralized_aqua = False
         if tile == "L":
             self.board.remove_entity("lava", dest)
-            neutralized = True
+            neutralized_lava = True
+        elif tile == "A":
+            self.board.remove_entity("aqua", dest)
+            neutralized_aqua = True
         elif tile not in (".", "G"):
             return Result(ok=False, status="blocked", reason=f"box_hits_{tile}")
 
@@ -122,7 +126,12 @@ class Actions:
         return Result(
             ok=True,
             status="ok",
-            data={"from": box_pos, "to": dest, "neutralized_lava": neutralized},
+            data={
+                "from": box_pos,
+                "to": dest,
+                "neutralized_lava": neutralized_lava,
+                "neutralized_aqua": neutralized_aqua,
+            },
         )
 
     def tick_counters(self):
