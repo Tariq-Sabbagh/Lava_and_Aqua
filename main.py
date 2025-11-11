@@ -1,4 +1,5 @@
 from src.factory import GameFactory
+from src.renderer import play_with_renderer
 
 def print_board(grid):
     for row in grid:
@@ -65,9 +66,13 @@ def main():
         print("invalid level number.")
         return
 
+    use_renderer = input("Run with Pygame renderer? (y/N): ").strip().lower() == "y"
     factory = GameFactory()
-    ctx = factory.create(level)
-    game_loop(ctx)
+    if use_renderer:
+        play_with_renderer(level, factory)
+    else:
+        ctx = factory.create(level)
+        game_loop(ctx)
 
 
 
