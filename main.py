@@ -48,6 +48,12 @@ def game_loop(ctx):
             print("YOU LOSE! (lava spread)")
             break
 
+        aqua = rules.apply_spread("aqua")
+        if aqua.status == "lose":
+            print_board(board.grid)
+            print("YOU LOSE! (aqua spread)")
+            break
+
         print_board(board.grid)
 
 def main():

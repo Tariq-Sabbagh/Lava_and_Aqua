@@ -118,6 +118,10 @@ class Board:
         old_symbol = self.grid[r][c]
         if old_symbol == val:
             return
+
+        if val == "W":
+            self._base[r][c] = "W"
+
         self.grid[r][c] = val
 
         old_kind = self.SYMBOL_TO_KIND.get(old_symbol)

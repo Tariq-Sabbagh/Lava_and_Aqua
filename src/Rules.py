@@ -25,6 +25,6 @@ class Rules:
             return res
 
         hits_player = bool((res.data or {}).get("hits_player"))
-        if hits_player:
+        if kind == "lava" and hits_player:
             return Result(ok=False, status="lose", reason=f"{kind}_spread_hit", data=res.data)
         return Result(ok=True, status="ok", data=res.data)

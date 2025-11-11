@@ -63,14 +63,28 @@ class Actions:
         )
         new_cells = set()
         hits_player = False
+        new_walls = set()
 
         for r, c in sources:
             for nr, nc in self.board.neighbors4(r, c):
                 tile = self.board.get(nr, nc)
+                if tile == "W":
+                    continue
                 if tile == ".":
                     new_cells.add((nr, nc))
-                elif tile == "P":
-                    hits_player = True
+                    continue
+                if tile == "P":
+                    if kind == "lava":
+                        hits_player = True
+                    continue
+                if kind == "aqua" and tile == "L":
+                    self.board.set(nr, nc, "W")
+                    new_walls.add((nr, nc))
+                    continue
+                if kind == "lava" and tile == "A":
+                    self.board.set(nr, nc, "W")
+                    new_walls.add((nr, nc))
+                    continue
 
         for pos in new_cells:
             self.board.add_entity(kind, pos)
@@ -78,7 +92,11 @@ class Actions:
         return Result(
             ok=True,
             status="ok",
-            data={"new_cells": frozenset(new_cells), "hits_player": hits_player},
+            data={
+                "new_cells": frozenset(new_cells),
+                "hits_player": hits_player,
+                "new_walls": frozenset(new_walls),
+            },
         )
 
     def _push_box(self, box_pos, delta):
