@@ -34,7 +34,7 @@ class Board:
 
 
     def get_positions(self, entity_name):
-        return list(self.entities.get(entity_name, []))
+        return set(self.entities.get(entity_name, []))
 
     def _scan_entities(self):
         found = defaultdict(set)
@@ -69,10 +69,57 @@ class Board:
         return self.grid
     
     def getNeighbors(self , r , c):
-        return {
-            (r - 1 , c + 0),
-            (r + 1 , c + 0),
-            (r + 0 , c + 1),
-            (r + 0 , c - 1),
+        for dr, dc in ((-1,0),(1,0),(0,1),(0,-1)):
+            nr, nc = r+dr, c+dc
+            if self.in_bounds(nr, nc):
+                yield (nr, nc)
 
-        }
+    def update_entity(self, kind, old_pos, new_pos):
+        olr, olc = old_pos
+        nr, nc = new_pos
+        if not (self.in_bounds(olr,olc) and self.in_bounds(nr,nc)):
+            raise ValueError(f"update_entity {kind}: out of bounds")
+
+        if self.grid[olr][olc] == "P": self.grid[olr][olc] = "."
+        elif self.grid[olr][olc] in ("L","A","B"): self.grid[olr][olc] = "."
+
+        symbol = {"player":"P","goal":"G","lava":"L","aqua":"A","box":"B"}[kind]
+        self.grid[nr][nc] = symbol
+
+        if kind == "player":
+            self.player_positions.discard(old_pos)
+            self.player_positions.add(new_pos)
+        elif kind == "lava":
+            self.lava_positions.discard(old_pos)
+            self.lava_positions.add(new_pos)
+        elif kind == "aqua":
+            self.aqua_positions.discard(old_pos)
+            self.aqua_positions.add(new_pos)
+        elif kind == "box":
+            self.box_positions.discard(old_pos)
+            self.box_positions.add(new_pos)
+
+    def add_entity(self, kind, pos):
+        r, c = pos
+        if not self.in_bounds(r,c): 
+            raise ValueError(f"add_entity {kind}: out of bounds {pos}")
+        symbol = {"player":"P","goal":"G","lava":"L","aqua":"A","box":"B"}[kind]
+        self.grid[r][c] = symbol
+        if kind == "player": self.player_positions.add(pos)
+        elif kind == "lava": self.lava_positions.add(pos)
+        elif kind == "aqua": self.aqua_positions.add(pos)
+        elif kind == "box": self.box_positions.add(pos)
+
+    def remove_entity(self, kind, pos):
+        r, c = pos
+        if not self.in_bounds(r,c): 
+            raise ValueError(f"remove_entity {kind}: out of bounds {pos}")
+        self.grid[r][c] = "."
+        if kind == "player": self.player_positions.discard(pos)
+        elif kind == "lava": self.lava_positions.discard(pos)
+        elif kind == "aqua": self.aqua_positions.discard(pos)
+        elif kind == "box": self.box_positions.discard(pos)
+        
+    
+    def in_bounds(self, r, c): return 0 <= r < self.row and 0 <= c < self.col
+    def is_wall(self, r, c): return self.grid[r][c] == "W"
