@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import Iterable, Tuple
 
 try:
-    import pygame
+    import pygame # type: ignore
 except ModuleNotFoundError as exc:  # pragma: no cover - pygame optional in tests
     raise RuntimeError(
         "pygame is required for the graphical renderer. "
