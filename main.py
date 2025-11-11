@@ -1,5 +1,6 @@
 from src.Board import Board
 from src.Move import Actions
+from src.Rules import Rules
 
 def print_board(grid):
     for row in grid:
@@ -26,6 +27,7 @@ def test(board):
 
 def game_loop(board):
     actions = Actions(board)
+    rules = Rules(board)
     print_board(board.grid)
     print("Controls: W/A/S/D to move, Q to quit.\n")
 
@@ -43,21 +45,28 @@ def game_loop(board):
             print("invalid key.")
             continue
 
-        res = actions.player_move(cmd)
-        if not res["ok"]:
-            print(f"blocked: {res.get('reason')}")
+        mv = rules.apply_move(actions, cmd)
+        if mv["status"] == "blocked":
+            print(f"blocked: {mv.get('reason', 'unknown')}")
             print_board(board.grid)
             continue
         
-        if res.get("target") == "G":
-            print_board(board.grid); print("YOU WIN!"); break
-        if res.get("target") == "L":
-            print_board(board.grid); print("YOU LOSE! (stepped into lava)"); break
-        
-        spread = actions.spread("lava")
-        if spread["status"] == "lose":
-            print_board(board.grid); print("YOU LOSE! (lava spread)"); break
-        
+        if mv["status"] == "win":
+            print_board(board.grid)
+            print("YOU WIN!")
+            break
+
+        if mv["status"] == "lose":
+            print_board(board.grid)
+            print("YOU LOSE! (stepped into lava)")
+            break
+
+        lava = rules.apply_spread(actions, "lava")
+        if lava["status"] == "lose":
+            print_board(board.grid)
+            print("YOU LOSE! (lava spread)")
+            break
+
         print_board(board.grid)
 
 def main():

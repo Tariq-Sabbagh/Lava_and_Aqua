@@ -1,5 +1,4 @@
 from src.Board import Board
-from src.Rules import Rules
 
 class Actions:
     def __init__(self , board):
