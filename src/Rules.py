@@ -28,3 +28,6 @@ class Rules:
         if kind == "lava" and hits_player:
             return Result(ok=False, status="lose", reason=f"{kind}_spread_hit", data=res.data)
         return Result(ok=True, status="ok", data=res.data)
+
+    def tick_counters(self):
+        return self.actions.tick_counters()

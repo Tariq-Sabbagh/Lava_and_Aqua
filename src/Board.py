@@ -30,6 +30,8 @@ class Board:
         self._static_goals = {
             (r, c) for r, row in enumerate(self._base) for c, val in enumerate(row) if val == "G"
         }
+        self._counters: Dict[Coord, int] = {}
+        self._init_counters()
         self._entities: Dict[str, Set[Coord]] = self._scan_entities()
 
     def iter_cells(self) -> Iterable[Tuple[int, int, str]]:
@@ -72,6 +74,15 @@ class Board:
             if kind in self.DYNAMIC_KINDS:
                 found[kind].add((r, c))
         return found
+    
+    def _symbol_is_counter(self, symbol: str) -> bool:
+        return isinstance(symbol, str) and symbol.isdigit()
+
+    def _init_counters(self):
+        for r, row in enumerate(self.grid):
+            for c, symbol in enumerate(row):
+                if self._symbol_is_counter(symbol):
+                    self._counters[(r, c)] = int(symbol)
 
     def _build_base_grid(self):
         base = []
@@ -108,6 +119,9 @@ class Board:
     def cell_base(self, r, c):
         return self._base[r][c]
     
+    def is_counter(self, r, c):
+        return (r, c) in self._counters
+    
     def set(self, r, c, val):
         if not self.in_bounds(r, c):
             raise ValueError(f"set: out of bounds {(r, c)}")
@@ -116,13 +130,16 @@ class Board:
             val = self._base[r][c]
 
         old_symbol = self.grid[r][c]
-        if old_symbol == val:
+        if old_symbol == val and not self._symbol_is_counter(val):
             return
 
         if val == "W":
             self._base[r][c] = "W"
 
         self.grid[r][c] = val
+
+        if self._symbol_is_counter(old_symbol):
+            self._counters.pop((r, c), None)
 
         old_kind = self.SYMBOL_TO_KIND.get(old_symbol)
         if old_kind in self._entities:
@@ -169,9 +186,27 @@ class Board:
         if not self.in_bounds(r, c):
             raise ValueError(f"remove_entity {kind}: out of bounds {pos}")
         self.set(r, c, ".")
+
+    def tick_counters(self):
+        if not self._counters:
+            return {"removed": set(), "updated": {}}
+
+        removed = set()
+        updated = {}
+        for (r, c), value in list(self._counters.items()):
+            value -= 1
+            if value <= 0:
+                removed.add((r, c))
+                self._counters.pop((r, c), None)
+                self.set(r, c, ".")
+            else:
+                self._counters[(r, c)] = value
+                self.grid[r][c] = str(value)
+                updated[(r, c)] = value
+        return {"removed": removed, "updated": updated}
         
     def in_bounds(self, r, c):
         return 0 <= r < self.rows and 0 <= c < self.cols
 
     def is_wall(self, r, c):
-        return self.grid[r][c] == "W"
+        return self.grid[r][c] == "W" or self.is_counter(r, c)

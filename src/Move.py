@@ -68,7 +68,7 @@ class Actions:
         for r, c in sources:
             for nr, nc in self.board.neighbors4(r, c):
                 tile = self.board.get(nr, nc)
-                if tile == "W":
+                if tile == "W" or tile.isdigit():
                     continue
                 if tile == ".":
                     new_cells.add((nr, nc))
@@ -108,7 +108,7 @@ class Actions:
             return Result(ok=False, status="blocked", reason="box_out_of_bounds")
 
         tile = self.board.get(*dest)
-        if tile in ("W", "B"):
+        if tile in ("W", "B") or tile.isdigit():
             return Result(ok=False, status="blocked", reason="box_blocked")
 
         neutralized = False
@@ -124,3 +124,6 @@ class Actions:
             status="ok",
             data={"from": box_pos, "to": dest, "neutralized_lava": neutralized},
         )
+
+    def tick_counters(self):
+        return self.board.tick_counters()

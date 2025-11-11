@@ -42,6 +42,8 @@ def game_loop(ctx):
             print(f"YOU LOSE! ({mv.reason or 'move failed'})")
             break
 
+        rules.tick_counters()
+
         lava = rules.apply_spread("lava")
         if lava.status == "lose":
             print_board(board.grid)
