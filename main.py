@@ -43,23 +43,21 @@ def game_loop(board):
             print("invalid key.")
             continue
 
-        spread = actions.spread("lava")
         res = actions.player_move(cmd)
         if not res["ok"]:
-            print(f"blocked: {res.get('reason','unknown')}")
+            print(f"blocked: {res.get('reason')}")
             print_board(board.grid)
             continue
-
-        target = res.get("target")
-        if target == "G":
-            print_board(board.grid)
-            print("YOU WIN!")
-            break
-        if target == "L":
-            print_board(board.grid)
-            print("YOU LOSE! (stepped into lava)")
-            break
-
+        
+        if res.get("target") == "G":
+            print_board(board.grid); print("YOU WIN!"); break
+        if res.get("target") == "L":
+            print_board(board.grid); print("YOU LOSE! (stepped into lava)"); break
+        
+        spread = actions.spread("lava")
+        if spread["status"] == "lose":
+            print_board(board.grid); print("YOU LOSE! (lava spread)"); break
+        
         print_board(board.grid)
 
 def main():
