@@ -19,15 +19,15 @@ class Actions:
         
         if not self.board.in_bounds(nr, nc) or self.board.is_wall(nr , nc):
             print("blocked: out of bounds | blocked: wall")
-            return False
+            return {"ok": False, "reason": "out_of_bounds"}
         
-        self.spread("lava")
+        # self.spread("lava")
         target = self.board.get(nr, nc)
         
 
         self.board.update_entity("player", (r, c), (nr, nc))
         self.player_pos = (nr, nc)
-        return True
+        return {"ok": True, "target": target, "from": (r, c), "to": (nr, nc)}
 
     def spread(self , kind):
         if kind not in ("lava", "aqua"):
@@ -48,5 +48,4 @@ class Actions:
         for pos in new_cells:
             self.board.add_entity("lava", pos)
         
-        player_hit = any(pos in self.board.player_positions for pos in new_cells)
-        return {"added": len(new_cells), "player_hit": player_hit}
+        return {"added": len(new_cells), "new_cells": new_cells}
