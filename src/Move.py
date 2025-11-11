@@ -1,22 +1,22 @@
-from src.Board import Board
-
 class Actions:
-    def __init__(self , board):
-        self.board = board
-        self.key_to_delta = {
-            "W": (-1, 0),  # up
-            "A": (0, -1),  # left
-            "S": (1, 0),   # down
-            "D": (0, 1),   # right
-        }
-        
+    """Handles concrete state mutations on top of a Board instance."""
 
-    def player_move(self , key):
+    KEY_TO_DELTA = {
+        "W": (-1, 0),  # up
+        "A": (0, -1),  # left
+        "S": (1, 0),   # down
+        "D": (0, 1),   # right
+    }
+
+    def __init__(self, board):
+        self.board = board
+
+    def player_move(self, key):
         if not self.board.player_positions:
             return {"ok": False, "status": "blocked", "reason": "no_player"}
     
         (r, c) = next(iter(self.board.player_positions))
-        dr, dc = self.key_to_delta.get(key.upper(), (0, 0))
+        dr, dc = self.KEY_TO_DELTA.get(key.upper(), (0, 0))
         nr, nc = r + dr, c + dc
     
         if not self.board.in_bounds(nr, nc):
@@ -28,7 +28,7 @@ class Actions:
         self.board.update_entity("player", (r, c), (nr, nc))
         return {"ok": True, "status": "ok", "target": target, "from": (r, c), "to": (nr, nc)}
 
-    def spread(self , kind):
+    def spread(self, kind):
         if kind not in ("lava", "aqua"):
             raise ValueError(f"spread: unknown kind '{kind}'")
 

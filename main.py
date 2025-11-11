@@ -1,33 +1,15 @@
-from src.Board import Board
-from src.Move import Actions
-from src.Rules import Rules
+from src.factory import GameFactory
 
 def print_board(grid):
     for row in grid:
         print(" ".join(row))
     print()
 
-def test(board):
-    m = Actions(board)
-    # print_board(board.grid)
-    # print(f"Player positions: {board.player_positions or 'not found'}")
-    m.player_move("A")
-    print_board(board.grid)
-    # print(f"Player positions: {board.player_positions or 'not found'}")
-    m.player_move("W")
-    print_board(board.grid)
-    # print(f"Player positions: {board.player_positions or 'not found'}")
-    m.player_move("W")
-    print_board(board.grid)
-    # print(f"Player positions: {board.player_positions or 'not found'}")
-    # print(f"Goal positions: {board.goal_positions or 'not found'}")
-    # print(f"Lava cells: {board.lava_positions or 'none'}")
-    # print(f"Aqua cells: {board.aqua_positions or 'none'}")
-    # print(f"Box cells: {board.box_positions or 'none'}")
+def game_loop(ctx):
+    board = ctx.board
+    actions = ctx.actions
+    rules = ctx.rules
 
-def game_loop(board):
-    actions = Actions(board)
-    rules = Rules(board)
     print_board(board.grid)
     print("Controls: W/A/S/D to move, Q to quit.\n")
 
@@ -76,10 +58,11 @@ def main():
         print("invalid level number.")
         return
 
-    board = Board(level)
-    game_loop(board)
+    factory = GameFactory()
+    ctx = factory.create(level)
+    game_loop(ctx)
 
-    
+
 
 if __name__ == '__main__':
     main()
