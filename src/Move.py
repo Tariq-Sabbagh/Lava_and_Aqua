@@ -33,11 +33,24 @@ class Actions:
             return Result(ok=False, status="blocked", reason="wall")
 
         target = self.board.get(nr, nc)
+        push_info = None
+        if target == "B":
+            push_result = self._push_box((nr, nc), (dr, dc))
+            if not push_result.ok:
+                return push_result
+            push_info = push_result.data or {}
+            target = "."
+
         self.board.update_entity("player", start, (nr, nc))
         return Result(
             ok=True,
             status="ok",
-            data={"from": start, "to": (nr, nc), "target": target},
+            data={
+                "from": start,
+                "to": (nr, nc),
+                "target": target,
+                "push": push_info,
+            },
         )
 
     def spread(self, kind):
@@ -65,4 +78,32 @@ class Actions:
             ok=True,
             status="ok",
             data={"new_cells": frozenset(new_cells), "hits_player": hits_player},
+        )
+
+    def _push_box(self, box_pos, delta):
+        br, bc = box_pos
+        dr, dc = delta
+        dest = (br + dr, bc + dc)
+
+        if not self.board.in_bounds(*dest):
+            return Result(ok=False, status="blocked", reason="box_out_of_bounds")
+
+        tile = self.board.get(*dest)
+        if tile in ("W", "B"):
+            return Result(ok=False, status="blocked", reason="box_blocked")
+        if tile == "G":
+            return Result(ok=False, status="blocked", reason="box_goal_block")
+
+        neutralized = False
+        if tile == "L":
+            self.board.remove_entity("lava", dest)
+            neutralized = True
+        elif tile != ".":
+            return Result(ok=False, status="blocked", reason=f"box_hits_{tile}")
+
+        self.board.update_entity("box", box_pos, dest)
+        return Result(
+            ok=True,
+            status="ok",
+            data={"from": box_pos, "to": dest, "neutralized_lava": neutralized},
         )
