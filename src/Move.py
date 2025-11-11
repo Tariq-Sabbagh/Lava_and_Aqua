@@ -39,8 +39,8 @@ class Actions:
             if not push_result.ok:
                 return push_result
             push_info = push_result.data or {}
-            target = "."
 
+        landed_goal = self.board.is_goal_cell(nr, nc)
         self.board.update_entity("player", start, (nr, nc))
         return Result(
             ok=True,
@@ -49,6 +49,7 @@ class Actions:
                 "from": start,
                 "to": (nr, nc),
                 "target": target,
+                "on_goal": landed_goal,
                 "push": push_info,
             },
         )
@@ -91,14 +92,12 @@ class Actions:
         tile = self.board.get(*dest)
         if tile in ("W", "B"):
             return Result(ok=False, status="blocked", reason="box_blocked")
-        if tile == "G":
-            return Result(ok=False, status="blocked", reason="box_goal_block")
 
         neutralized = False
         if tile == "L":
             self.board.remove_entity("lava", dest)
             neutralized = True
-        elif tile != ".":
+        elif tile not in (".", "G"):
             return Result(ok=False, status="blocked", reason=f"box_hits_{tile}")
 
         self.board.update_entity("box", box_pos, dest)

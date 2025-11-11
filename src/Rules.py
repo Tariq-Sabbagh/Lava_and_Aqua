@@ -11,10 +11,11 @@ class Rules:
         if not res.ok:
             return res
 
-        target = (res.data or {}).get("target")
+        payload = res.data or {}
+        target = payload.get("target")
         if target == "L":
             return Result(ok=False, status="lose", reason="lava_hit", data=res.data)
-        if target == "G":
+        if payload.get("on_goal"):
             return Result(ok=True, status="win", data=res.data)
         return Result(ok=True, status="ok", data=res.data)
     

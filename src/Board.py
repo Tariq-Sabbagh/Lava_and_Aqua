@@ -1,6 +1,5 @@
 import json
 import os
-from collections import defaultdict
 from typing import Dict, Iterable, List, Set, Tuple
 
 Coord = Tuple[int, int]
@@ -14,6 +13,7 @@ class Board:
         "aqua": {"A"},
         "box": {"B"},
     }
+    DYNAMIC_KINDS = {"player", "lava", "aqua", "box"}
     KIND_TO_SYMBOL = {kind: next(iter(symbols)) for kind, symbols in SYMBOL_MAP.items()}
     SYMBOL_TO_KIND: Dict[str, str] = {
         symbol: kind for kind, symbols in SYMBOL_MAP.items() for symbol in symbols
@@ -26,9 +26,11 @@ class Board:
         self.rows = len(self.grid)
         self.cols = len(self.grid[0]) if self.grid else 0
 
+        self._base = self._build_base_grid()
+        self._static_goals = {
+            (r, c) for r, row in enumerate(self._base) for c, val in enumerate(row) if val == "G"
+        }
         self._entities: Dict[str, Set[Coord]] = self._scan_entities()
-        for kind in self.SYMBOL_MAP:
-            self._entities.setdefault(kind, set())
 
     def iter_cells(self) -> Iterable[Tuple[int, int, str]]:
         for r, row_values in enumerate(self.grid):
@@ -36,6 +38,8 @@ class Board:
                 yield r, c, symbol
 
     def positions(self, entity_name: str):
+        if entity_name == "goal":
+            return frozenset(self._static_goals)
         return frozenset(self._entities.get(entity_name, set()))
 
     @property
@@ -58,13 +62,30 @@ class Board:
     def box_positions(self):
         return self.positions("box")
 
+    def is_goal_cell(self, r, c):
+        return (r, c) in self._static_goals
+
     def _scan_entities(self):
-        found: Dict[str, Set[Coord]] = defaultdict(set)
+        found: Dict[str, Set[Coord]] = {kind: set() for kind in self.DYNAMIC_KINDS}
         for r, c, symbol in self.iter_cells():
             kind = self.SYMBOL_TO_KIND.get(symbol)
-            if kind:
+            if kind in self.DYNAMIC_KINDS:
                 found[kind].add((r, c))
-        return {name: set(positions) for name, positions in found.items()}
+        return found
+
+    def _build_base_grid(self):
+        base = []
+        for row in self.grid:
+            base_row = []
+            for symbol in row:
+                if symbol == "W":
+                    base_row.append("W")
+                elif symbol == "G":
+                    base_row.append("G")
+                else:
+                    base_row.append(".")
+            base.append(base_row)
+        return base
 
     def _load_grid(self):
         filename = f"level_{self.level_number}.json"
@@ -84,21 +105,28 @@ class Board:
     def get(self, r, c):
         return self.grid[r][c]
     
+    def cell_base(self, r, c):
+        return self._base[r][c]
+    
     def set(self, r, c, val):
         if not self.in_bounds(r, c):
             raise ValueError(f"set: out of bounds {(r, c)}")
+
+        if val == ".":
+            val = self._base[r][c]
+
         old_symbol = self.grid[r][c]
         if old_symbol == val:
             return
         self.grid[r][c] = val
 
         old_kind = self.SYMBOL_TO_KIND.get(old_symbol)
-        if old_kind:
-            self._entities.setdefault(old_kind, set()).discard((r, c))
+        if old_kind in self._entities:
+            self._entities[old_kind].discard((r, c))
 
         new_kind = self.SYMBOL_TO_KIND.get(val)
-        if new_kind:
-            self._entities.setdefault(new_kind, set()).add((r, c))
+        if new_kind in self._entities:
+            self._entities[new_kind].add((r, c))
 
     def neighbors4(self, r, c) -> List[Coord]:
         neighbors: List[Coord] = []
@@ -109,6 +137,9 @@ class Board:
         return neighbors
 
     def update_entity(self, kind, old_pos, new_pos):
+        if kind not in self.DYNAMIC_KINDS:
+            raise ValueError(f"update_entity: unsupported kind '{kind}'")
+
         olr, olc = old_pos
         nr, nc = new_pos
         if not (self.in_bounds(olr, olc) and self.in_bounds(nr, nc)):
@@ -119,6 +150,8 @@ class Board:
         self.set(nr, nc, symbol)
 
     def add_entity(self, kind, pos):
+        if kind not in self.DYNAMIC_KINDS:
+            raise ValueError(f"add_entity: unsupported kind '{kind}'")
         r, c = pos
         if not self.in_bounds(r, c):
             raise ValueError(f"add_entity {kind}: out of bounds {pos}")
@@ -126,6 +159,8 @@ class Board:
         self.set(r, c, symbol)
 
     def remove_entity(self, kind, pos):
+        if kind not in self.DYNAMIC_KINDS:
+            raise ValueError(f"remove_entity: unsupported kind '{kind}'")
         r, c = pos
         if not self.in_bounds(r, c):
             raise ValueError(f"remove_entity {kind}: out of bounds {pos}")
