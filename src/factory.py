@@ -21,5 +21,5 @@ class GameFactory:
     def create(self, level_number):
         board = Board(level_number, base_dir=self.levels_dir)
         actions = Actions(board)
-        rules = Rules(board)
+        rules = Rules(board, actions)
         return GameContext(board=board, actions=actions, rules=rules)

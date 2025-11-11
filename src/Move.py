@@ -1,5 +1,8 @@
+from src.result import Result
+
+
 class Actions:
-    """Handles concrete state mutations on top of a Board instance."""
+    """Concrete mutations applied to the board."""
 
     KEY_TO_DELTA = {
         "W": (-1, 0),  # up
@@ -12,43 +15,54 @@ class Actions:
         self.board = board
 
     def player_move(self, key):
-        if not self.board.player_positions:
-            return {"ok": False, "status": "blocked", "reason": "no_player"}
-    
-        (r, c) = next(iter(self.board.player_positions))
-        dr, dc = self.KEY_TO_DELTA.get(key.upper(), (0, 0))
-        nr, nc = r + dr, c + dc
-    
+        key = key.upper()
+        if key not in self.KEY_TO_DELTA:
+            return Result(ok=False, status="blocked", reason="invalid_move_key")
+
+        try:
+            start = next(iter(self.board.player_positions))
+        except StopIteration:
+            return Result(ok=False, status="blocked", reason="no_player")
+
+        dr, dc = self.KEY_TO_DELTA[key]
+        nr, nc = start[0] + dr, start[1] + dc
+
         if not self.board.in_bounds(nr, nc):
-            return {"ok": False, "status": "blocked", "reason": "out_of_bounds"}
+            return Result(ok=False, status="blocked", reason="out_of_bounds")
         if self.board.is_wall(nr, nc):
-            return {"ok": False, "status": "blocked", "reason": "wall"}
-    
+            return Result(ok=False, status="blocked", reason="wall")
+
         target = self.board.get(nr, nc)
-        self.board.update_entity("player", (r, c), (nr, nc))
-        return {"ok": True, "status": "ok", "target": target, "from": (r, c), "to": (nr, nc)}
+        self.board.update_entity("player", start, (nr, nc))
+        return Result(
+            ok=True,
+            status="ok",
+            data={"from": start, "to": (nr, nc), "target": target},
+        )
 
     def spread(self, kind):
         if kind not in ("lava", "aqua"):
-            raise ValueError(f"spread: unknown kind '{kind}'")
+            return Result(ok=False, status="blocked", reason=f"unknown_{kind}")
 
-        sources = self.board.lava_positions if kind == "lava" else self.board.aqua_positions
-        current = set(sources)
+        sources = (
+            self.board.lava_positions if kind == "lava" else self.board.aqua_positions
+        )
         new_cells = set()
         hits_player = False
 
-        for r, c in current:
-            for nr, nc in self.board.getNeighbors(r, c):
-                if self.board.is_wall(nr, nc):
-                    continue
-                if self.board.get(nr, nc) == ".":
+        for r, c in sources:
+            for nr, nc in self.board.neighbors4(r, c):
+                tile = self.board.get(nr, nc)
+                if tile == ".":
                     new_cells.add((nr, nc))
-                elif self.board.get(nr, nc) == "P":
-                    hits_player = True 
+                elif tile == "P":
+                    hits_player = True
 
         for pos in new_cells:
             self.board.add_entity(kind, pos)
 
-        return {"ok": True, "status": "ok" if not hits_player else "lose",
-                "reason": "player_hit" if hits_player else None,
-                "effects": {"added": len(new_cells), "new_cells": new_cells}}
+        return Result(
+            ok=True,
+            status="ok",
+            data={"new_cells": frozenset(new_cells), "hits_player": hits_player},
+        )

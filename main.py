@@ -7,7 +7,6 @@ def print_board(grid):
 
 def game_loop(ctx):
     board = ctx.board
-    actions = ctx.actions
     rules = ctx.rules
 
     print_board(board.grid)
@@ -27,24 +26,24 @@ def game_loop(ctx):
             print("invalid key.")
             continue
 
-        mv = rules.apply_move(actions, cmd)
-        if mv["status"] == "blocked":
-            print(f"blocked: {mv.get('reason', 'unknown')}")
+        mv = rules.apply_move(cmd)
+        if mv.status == "blocked":
+            print(f"blocked: {mv.reason or 'unknown'}")
             print_board(board.grid)
             continue
         
-        if mv["status"] == "win":
+        if mv.status == "win":
             print_board(board.grid)
             print("YOU WIN!")
             break
 
-        if mv["status"] == "lose":
+        if mv.status == "lose":
             print_board(board.grid)
-            print("YOU LOSE! (stepped into lava)")
+            print(f"YOU LOSE! ({mv.reason or 'move failed'})")
             break
 
-        lava = rules.apply_spread(actions, "lava")
-        if lava["status"] == "lose":
+        lava = rules.apply_spread("lava")
+        if lava.status == "lose":
             print_board(board.grid)
             print("YOU LOSE! (lava spread)")
             break

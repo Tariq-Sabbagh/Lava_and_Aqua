@@ -1,39 +1,29 @@
+from src.result import Result
+
 
 class Rules:
-    def __init__(self, board):
-        self.board = board  
+    def __init__(self, board, actions):
+        self.board = board
+        self.actions = actions
 
-    @property
-    def grid(self):
-        return self.board.grid
+    def apply_move(self, cmd):
+        res = self.actions.player_move(cmd)
+        if not res.ok:
+            return res
 
-    @property
-    def rows(self):
-        return self.board.row
-
-    @property
-    def cols(self):
-        return self.board.col
-
-
-    def is_goal(self , r , c): return self.grid[r][c] == "G"
-
-    def apply_move(self, actions, cmd):
-        res = actions.player_move(cmd)
-        if not res["ok"]:
-            return {"ok": False, "status": "blocked", "reason": res["reason"]}
-
-        t = res.get("target")
-        if t == "L":
-            return {"ok": False, "status": "lose", "reason": "lava_hit"}
-        if t == "G":
-            return {"ok": True,  "status": "win"}
-        return {"ok": True, "status": "ok"}
+        target = (res.data or {}).get("target")
+        if target == "L":
+            return Result(ok=False, status="lose", reason="lava_hit", data=res.data)
+        if target == "G":
+            return Result(ok=True, status="win", data=res.data)
+        return Result(ok=True, status="ok", data=res.data)
     
-    def apply_spread(self, actions, kind):
-        spr = actions.spread(kind)
-        new_cells = spr.get("effects", {}).get("new_cells", set())
-        hits_player = spr.get("status")
-        if hits_player == "lose":
-            return {"ok": False, "status": "lose", "reason": f"{kind}_spread_hit"}
-        return {"ok": True, "status": "ok", "effects": spr.get("effects", {})}
+    def apply_spread(self, kind):
+        res = self.actions.spread(kind)
+        if not res.ok:
+            return res
+
+        hits_player = bool((res.data or {}).get("hits_player"))
+        if hits_player:
+            return Result(ok=False, status="lose", reason=f"{kind}_spread_hit", data=res.data)
+        return Result(ok=True, status="ok", data=res.data)
