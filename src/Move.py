@@ -1,6 +1,6 @@
 from src.Board import Board
 
-class Move:
+class Actions:
     def __init__(self , board):
         self.x_moves = [0 , 0 , 1 , -1]
         self.y_moves = [1 , -1 , 0 , 0]

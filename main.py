@@ -1,5 +1,5 @@
 from src.Board import Board
-from src.Move import Move
+from src.Move import Actions
 
 def print_board(grid):
     for row in grid:
@@ -7,7 +7,7 @@ def print_board(grid):
     print()
 
 def test(board):
-    m = Move(board)
+    m = Actions(board)
     # print_board(board.grid)
     # print(f"Player positions: {board.player_positions or 'not found'}")
     m.player_move("A")
