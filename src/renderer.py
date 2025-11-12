@@ -6,7 +6,7 @@ but the CLI game loop continues to work without it.
 """
 
 from __future__ import annotations
-
+from copy import deepcopy
 import time
 from dataclasses import dataclass
 from typing import Iterable, Tuple
@@ -111,6 +111,8 @@ class GameRenderer:
                     pygame.K_LEFT: "A",
                     pygame.K_RIGHT: "D",
                     pygame.K_ESCAPE: "Q",
+                    pygame.K_r: "R"
+                    
                 }
                 return keymap.get(event.key)
         return None
@@ -178,6 +180,7 @@ def play_with_renderer(level: int, factory) -> None:
     """
     ctx = factory.create(level)
     renderer = GameRenderer(ctx.board)
+    ctxR =deepcopy(ctx)
     try:
         running = True
         while running:
@@ -189,8 +192,17 @@ def play_with_renderer(level: int, factory) -> None:
             if cmd == "Q":
                 running = False
                 continue
+            if cmd == "R":
+                ctx = factory.create(level)
+                renderer = GameRenderer(ctx.board)
+                continue
+
             move = ctx.rules.apply_move(cmd)
-            if move.status == "ok":
+            if move.status == "blocked":
+                print(f"blocked: {move.reason or 'unknown'}")
+                renderer.draw_board()
+                continue
+            elif move.status == "ok":
                 data = move.data or {}
                 if data.get("from") and data.get("to"):
                     renderer.animate_move(data["from"], data["to"])

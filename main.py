@@ -1,5 +1,6 @@
 from src.factory import GameFactory
 from src.renderer import play_with_renderer
+from copy import deepcopy
 
 def print_board(grid):
     for row in grid:
@@ -9,13 +10,15 @@ def print_board(grid):
 def game_loop(ctx):
     board = ctx.board
     rules = ctx.rules
+    ctxR =deepcopy(ctx)
+   
 
     print_board(board.grid)
     print("Controls: W/A/S/D to move, Q to quit.\n")
 
     while True:
         try:
-            cmd = input("Move (W/A/S/D or Q): ").strip().upper()
+            cmd = input("Move (W/A/S/D/R or Q): ").strip().upper()
         except (EOFError, KeyboardInterrupt):
             print("\nbye!")
             break
@@ -23,9 +26,15 @@ def game_loop(ctx):
         if cmd == "Q":
             print("bye!")
             break
-        if cmd not in ("W","A","S","D"):
+        elif cmd == "R":
+            print("initial board.")
+            game_loop(ctxR)
+            print_board(board.grid)
+            continue
+        elif cmd not in ("W","A","S","D"):
             print("invalid key.")
             continue
+        
 
         mv = rules.apply_move(cmd)
         if mv.status == "blocked":
