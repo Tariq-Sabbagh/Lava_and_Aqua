@@ -52,10 +52,6 @@ def game_loop(ctx):
             break
 
         aqua = rules.apply_spread("aqua")
-        if aqua.status == "lose":
-            print_board(board.grid)
-            print("YOU LOSE! (aqua spread)")
-            break
 
         print_board(board.grid)
 

@@ -17,7 +17,7 @@ class Board:
     KIND_TO_SYMBOL = {kind: next(iter(symbols)) for kind, symbols in SYMBOL_MAP.items()}
     SYMBOL_TO_KIND: Dict[str, str] = {
         symbol: kind for kind, symbols in SYMBOL_MAP.items() for symbol in symbols
-    }
+    } #trnsetions
 
     def __init__(self, level_number, base_dir="levels"):
         self.level_number = level_number
