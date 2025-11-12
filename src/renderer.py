@@ -201,7 +201,10 @@ def play_with_renderer(level: int, factory) -> None:
                 continue
 
             ctx.rules.tick_counters()
-            ctx.rules.apply_spread("lava")
+            lava = ctx.rules.apply_spread("lava")
+            if lava.status == "lose":
+                print("YOU LOSE! (lava spread)")
+                return
             ctx.rules.apply_spread("aqua")
     finally:
         renderer.close()
