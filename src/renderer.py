@@ -6,10 +6,9 @@ but the CLI game loop continues to work without it.
 """
 
 from __future__ import annotations
-from copy import deepcopy
 import time
 from dataclasses import dataclass
-from typing import Iterable, Tuple
+from typing import Tuple
 
 try:
     import pygame # type: ignore
@@ -20,6 +19,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - pygame optional in test
     ) from exc
 
 from src.Board import Board
+from src.session import GameSession
 
 Color = Tuple[int, int, int]
 
@@ -178,9 +178,8 @@ def play_with_renderer(level: int, factory) -> None:
     Convenience helper to run the existing logic with the renderer.
     This keeps main.py clean while demonstrating how to integrate Pygame.
     """
-    ctx = factory.create(level)
-    renderer = GameRenderer(ctx.board)
-    ctxR =deepcopy(ctx)
+    session = GameSession(factory, level)
+    renderer = GameRenderer(session.board)
     try:
         running = True
         while running:
@@ -193,30 +192,23 @@ def play_with_renderer(level: int, factory) -> None:
                 running = False
                 continue
             if cmd == "R":
-                ctx = factory.create(level)
-                renderer = GameRenderer(ctx.board)
+                session.reset()
+                renderer = GameRenderer(session.board)
                 continue
 
-            move = ctx.rules.apply_move(cmd)
-            if move.status == "blocked":
-                print(f"blocked: {move.reason or 'unknown'}")
+            outcome = session.step(cmd).result
+            if outcome.status == "blocked":
+                print(f"blocked: {outcome.reason or 'unknown'}")
                 renderer.draw_board()
                 continue
-            elif move.status == "ok":
-                data = move.data or {}
+            elif outcome.status == "ok":
+                data = outcome.data or {}
                 if data.get("from") and data.get("to"):
                     renderer.animate_move(data["from"], data["to"])
-            elif move.status in ("win", "lose"):
+            elif outcome.status in ("win", "lose"):
                 renderer.draw_board()
                 time.sleep(1.5)
                 running = False
                 continue
-
-            ctx.rules.tick_counters()
-            lava = ctx.rules.apply_spread("lava")
-            if lava.status == "lose":
-                print("YOU LOSE! (lava spread)")
-                return
-            ctx.rules.apply_spread("aqua")
     finally:
         renderer.close()

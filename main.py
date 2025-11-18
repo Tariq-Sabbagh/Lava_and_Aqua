@@ -1,17 +1,14 @@
 from src.factory import GameFactory
 from src.renderer import play_with_renderer
-from copy import deepcopy
+from src.session import GameSession
 
 def print_board(grid):
     for row in grid:
         print(" ".join(row))
     print()
 
-def game_loop(ctx):
-    board = ctx.board
-    rules = ctx.rules
-    ctxR =deepcopy(ctx)
-   
+def game_loop(session: GameSession):
+    board = session.board
 
     print_board(board.grid)
     print("Controls: W/A/S/D to move, Q to quit.\n")
@@ -28,7 +25,8 @@ def game_loop(ctx):
             break
         elif cmd == "R":
             print("initial board.")
-            game_loop(ctxR)
+            session.reset()
+            board = session.board
             print_board(board.grid)
             continue
         elif cmd not in ("W","A","S","D"):
@@ -36,31 +34,23 @@ def game_loop(ctx):
             continue
         
 
-        mv = rules.apply_move(cmd)
-        if mv.status == "blocked":
-            print(f"blocked: {mv.reason or 'unknown'}")
+        outcome = session.step(cmd).result
+        board = session.board
+
+        if outcome.status == "blocked":
+            print(f"blocked: {outcome.reason or 'unknown'}")
             print_board(board.grid)
             continue
         
-        if mv.status == "win":
+        if outcome.status == "win":
             print_board(board.grid)
             print("YOU WIN!")
             break
 
-        if mv.status == "lose":
+        if outcome.status == "lose":
             print_board(board.grid)
-            print(f"YOU LOSE! ({mv.reason or 'move failed'})")
+            print(f"YOU LOSE! ({outcome.reason or 'move failed'})")
             break
-
-        rules.tick_counters()
-
-        lava = rules.apply_spread("lava")
-        if lava.status == "lose":
-            print_board(board.grid)
-            print("YOU LOSE! (lava spread)")
-            break
-
-        aqua = rules.apply_spread("aqua")
 
         print_board(board.grid)
 
@@ -76,8 +66,8 @@ def main():
     if use_renderer:
         play_with_renderer(level, factory)
     else:
-        ctx = factory.create(level)
-        game_loop(ctx)
+        session = GameSession(factory, level)
+        game_loop(session)
 
 
 
