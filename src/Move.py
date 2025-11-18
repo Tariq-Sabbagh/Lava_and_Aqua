@@ -1,4 +1,10 @@
 from src.result import Result
+from src.tiles import (
+    BOX_PUSH_RULES,
+    KIND_TO_SYMBOL,
+    SPREAD_RULES,
+    SYMBOL_TO_KIND,
+)
 
 
 class Actions:
@@ -67,24 +73,29 @@ class Actions:
 
         for r, c in sources:
             for nr, nc in self.board.neighbors4(r, c):
-                tile = self.board.get(nr, nc)
-                if tile == "W" or tile.isdigit():
+                tile_symbol = self.board.get(nr, nc)
+                if tile_symbol.isdigit():
                     continue
-                if tile == ".":
+
+                tile_kind = SYMBOL_TO_KIND.get(tile_symbol)
+                if tile_kind is None:
+                    continue
+
+                effect = SPREAD_RULES.get((kind, tile_kind))
+                if effect is None:
+                    continue
+
+                if effect.hits_player:
+                    hits_player = True
+
+                if effect.convert_to_kind:
+                    convert_symbol = KIND_TO_SYMBOL[effect.convert_to_kind]
+                    self.board.set(nr, nc, convert_symbol)
+                    if effect.convert_to_kind == "wall":
+                        new_walls.add((nr, nc))
+
+                if effect.spawn:
                     new_cells.add((nr, nc))
-                    continue
-                if tile == "P":
-                    if kind == "lava":
-                        hits_player = True
-                    continue
-                if kind == "aqua" and tile == "L":
-                    self.board.set(nr, nc, "W")
-                    new_walls.add((nr, nc))
-                    continue
-                if kind == "lava" and tile == "A":
-                    self.board.set(nr, nc, "W")
-                    new_walls.add((nr, nc))
-                    continue
 
         for pos in new_cells:
             self.board.add_entity(kind, pos)
@@ -107,20 +118,22 @@ class Actions:
         if not self.board.in_bounds(*dest):
             return Result(ok=False, status="blocked", reason="box_out_of_bounds")
 
-        tile = self.board.get(*dest)
-        if tile in ("W", "B") or tile.isdigit():
+        tile_symbol = self.board.get(*dest)
+        if tile_symbol.isdigit():
             return Result(ok=False, status="blocked", reason="box_blocked")
+
+        tile_kind = SYMBOL_TO_KIND.get(tile_symbol)
+        interaction = BOX_PUSH_RULES.get(tile_kind)
+        if interaction is None or not interaction.allowed:
+            reason = "box_blocked" if tile_symbol in ("W", "B") else f"box_hits_{tile_symbol}"
+            return Result(ok=False, status="blocked", reason=reason)
 
         neutralized_lava = False
         neutralized_aqua = False
-        if tile == "L":
-            self.board.remove_entity("lava", dest)
-            neutralized_lava = True
-        elif tile == "A":
-            self.board.remove_entity("aqua", dest)
-            neutralized_aqua = True
-        elif tile not in (".", "G"):
-            return Result(ok=False, status="blocked", reason=f"box_hits_{tile}")
+        if interaction.removes_kind:
+            self.board.remove_entity(interaction.removes_kind, dest)
+            neutralized_lava = interaction.removes_kind == "lava"
+            neutralized_aqua = interaction.removes_kind == "aqua"
 
         self.board.update_entity("box", box_pos, dest)
         return Result(

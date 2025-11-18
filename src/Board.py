@@ -3,29 +3,19 @@ from __future__ import annotations
 from typing import Dict, Iterable, List, Set, Tuple
 
 from src.level_data import Coord, LevelLayout
-
-
-BOARD_SYMBOL_MAP: Dict[str, Set[str]] = {
-    "player": {"P"},
-    "goal": {"G"},
-    "lava": {"L"},
-    "aqua": {"A"},
-    "box": {"B"},
-}
-BOARD_DYNAMIC_KINDS = {"player", "lava", "aqua", "box"}
-BOARD_KIND_TO_SYMBOL = {kind: next(iter(symbols)) for kind, symbols in BOARD_SYMBOL_MAP.items()}
-BOARD_SYMBOL_TO_KIND: Dict[str, str] = {
-    symbol: kind for kind, symbols in BOARD_SYMBOL_MAP.items() for symbol in symbols
-}
+from src.tiles import (
+    DYNAMIC_KINDS as TILE_DYNAMIC_KINDS,
+    KIND_TO_SYMBOL as TILE_KIND_TO_SYMBOL,
+    SYMBOL_TO_KIND as TILE_SYMBOL_TO_KIND,
+)
 
 
 class BoardState:
     """Mutable board data derived from an immutable LevelLayout."""
 
-    SYMBOL_MAP = BOARD_SYMBOL_MAP
-    DYNAMIC_KINDS = BOARD_DYNAMIC_KINDS
-    KIND_TO_SYMBOL = BOARD_KIND_TO_SYMBOL
-    SYMBOL_TO_KIND = BOARD_SYMBOL_TO_KIND
+    DYNAMIC_KINDS = TILE_DYNAMIC_KINDS
+    KIND_TO_SYMBOL = TILE_KIND_TO_SYMBOL
+    SYMBOL_TO_KIND = TILE_SYMBOL_TO_KIND
 
     def __init__(self, layout: LevelLayout):
         self.layout = layout
@@ -35,7 +25,7 @@ class BoardState:
         self._base = layout.base_copy()
         self._static_goals = set(layout.static_goals)
         self._counters: Dict[Coord, int] = {}
-        self._entities: Dict[str, Set[Coord]] = {kind: set() for kind in BOARD_DYNAMIC_KINDS}
+        self._entities: Dict[str, Set[Coord]] = {kind: set() for kind in TILE_DYNAMIC_KINDS}
         self._init_counters()
         self._entities = self._scan_entities()
 
@@ -73,10 +63,10 @@ class BoardState:
         return (r, c) in self._static_goals
 
     def _scan_entities(self):
-        found: Dict[str, Set[Coord]] = {kind: set() for kind in BOARD_DYNAMIC_KINDS}
+        found: Dict[str, Set[Coord]] = {kind: set() for kind in TILE_DYNAMIC_KINDS}
         for r, c, symbol in self.iter_cells():
-            kind = BOARD_SYMBOL_TO_KIND.get(symbol)
-            if kind in BOARD_DYNAMIC_KINDS:
+            kind = TILE_SYMBOL_TO_KIND.get(symbol)
+            if kind in TILE_DYNAMIC_KINDS:
                 found[kind].add((r, c))
         return found
 
@@ -117,11 +107,11 @@ class BoardState:
         if self._symbol_is_counter(old_symbol):
             self._counters.pop((r, c), None)
 
-        old_kind = BOARD_SYMBOL_TO_KIND.get(old_symbol)
+        old_kind = TILE_SYMBOL_TO_KIND.get(old_symbol)
         if old_kind in self._entities:
             self._entities[old_kind].discard((r, c))
 
-        new_kind = BOARD_SYMBOL_TO_KIND.get(val)
+        new_kind = TILE_SYMBOL_TO_KIND.get(val)
         if new_kind in self._entities:
             self._entities[new_kind].add((r, c))
 
@@ -134,7 +124,7 @@ class BoardState:
         return neighbors
 
     def update_entity(self, kind, old_pos, new_pos):
-        if kind not in BOARD_DYNAMIC_KINDS:
+        if kind not in TILE_DYNAMIC_KINDS:
             raise ValueError(f"update_entity: unsupported kind '{kind}'")
 
         olr, olc = old_pos
@@ -142,21 +132,21 @@ class BoardState:
         if not (self.in_bounds(olr, olc) and self.in_bounds(nr, nc)):
             raise ValueError(f"update_entity {kind}: out of bounds")
 
-        symbol = BOARD_KIND_TO_SYMBOL[kind]
+        symbol = TILE_KIND_TO_SYMBOL[kind]
         self.set(olr, olc, ".")
         self.set(nr, nc, symbol)
 
     def add_entity(self, kind, pos):
-        if kind not in BOARD_DYNAMIC_KINDS:
+        if kind not in TILE_DYNAMIC_KINDS:
             raise ValueError(f"add_entity: unsupported kind '{kind}'")
         r, c = pos
         if not self.in_bounds(r, c):
             raise ValueError(f"add_entity {kind}: out of bounds {pos}")
-        symbol = BOARD_KIND_TO_SYMBOL[kind]
+        symbol = TILE_KIND_TO_SYMBOL[kind]
         self.set(r, c, symbol)
 
     def remove_entity(self, kind, pos):
-        if kind not in BOARD_DYNAMIC_KINDS:
+        if kind not in TILE_DYNAMIC_KINDS:
             raise ValueError(f"remove_entity: unsupported kind '{kind}'")
         r, c = pos
         if not self.in_bounds(r, c):
@@ -191,10 +181,9 @@ class BoardState:
 class Board:
     """Facade combining an immutable layout with a mutable BoardState."""
 
-    SYMBOL_MAP = BOARD_SYMBOL_MAP
-    DYNAMIC_KINDS = BOARD_DYNAMIC_KINDS
-    KIND_TO_SYMBOL = BOARD_KIND_TO_SYMBOL
-    SYMBOL_TO_KIND = BOARD_SYMBOL_TO_KIND
+    DYNAMIC_KINDS = TILE_DYNAMIC_KINDS
+    KIND_TO_SYMBOL = TILE_KIND_TO_SYMBOL
+    SYMBOL_TO_KIND = TILE_SYMBOL_TO_KIND
 
     def __init__(self, layout: LevelLayout, state: BoardState | None = None):
         self.layout = layout
