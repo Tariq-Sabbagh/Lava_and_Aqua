@@ -12,6 +12,7 @@ class TileType:
     symbol: str
     category: str
     dynamic: bool = False
+    preserve_when_occupied: bool = False
 
 
 @dataclass(frozen=True)
@@ -19,6 +20,7 @@ class SpreadEffect:
     spawn: bool = False
     hits_player: bool = False
     convert_to_kind: str | None = None
+    convert_location: str = "target"  # "source" or "target"
 
 
 @dataclass(frozen=True)
@@ -33,7 +35,7 @@ _TILE_TYPES: Tuple[TileType, ...] = (
     TileType("goal", "G", "terrain"),
     TileType("player", "P", "entity", dynamic=True),
     TileType("lava", "L", "entity", dynamic=True),
-    TileType("aqua", "A", "entity", dynamic=True),
+    TileType("aqua", "A", "entity", dynamic=True, preserve_when_occupied=True),
     TileType("box", "B", "entity", dynamic=True),
 )
 
@@ -47,14 +49,14 @@ SPREAD_RULES: Dict[Tuple[str, str], SpreadEffect] = {
     ("lava", "floor"): SpreadEffect(spawn=True),
     ("aqua", "floor"): SpreadEffect(spawn=True),
     ("lava", "player"): SpreadEffect(hits_player=True),
-    ("lava", "aqua"): SpreadEffect(convert_to_kind="wall"),
+    ("lava", "aqua"): SpreadEffect(convert_to_kind="wall", convert_location="source"),
     ("aqua", "lava"): SpreadEffect(convert_to_kind="wall"),
 }
 
 
 BOX_PUSH_RULES: Dict[str, PushEffect] = {
     "floor": PushEffect(allowed=True),
-    "goal": PushEffect(allowed=True),
+    "goal": PushEffect(allowed=False),
     "lava": PushEffect(allowed=True, removes_kind="lava"),
     "aqua": PushEffect(allowed=True, removes_kind="aqua"),
 }
