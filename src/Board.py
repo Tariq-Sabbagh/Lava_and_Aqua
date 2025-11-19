@@ -26,6 +26,7 @@ class BoardState:
         self._static_goals = set(layout.static_goals)
         self._counters: Dict[Coord, int] = {}
         self._entities: Dict[str, Set[Coord]] = {kind: set() for kind in TILE_DYNAMIC_KINDS}
+        self._overlays: Dict[Coord, str] = {}
         self._init_counters()
         self._entities = self._scan_entities()
 
@@ -34,10 +35,17 @@ class BoardState:
             for c, symbol in enumerate(row_values):
                 yield r, c, symbol
 
-    def positions(self, entity_name: str):
+    def positions(self, entity_name: str, include_overlays: bool = False):
         if entity_name == "goal":
             return frozenset(self._static_goals)
-        return frozenset(self._entities.get(entity_name, set()))
+        base = set(self._entities.get(entity_name, set()))
+        if include_overlays:
+            base.update(
+                pos
+                for pos, symbol in self._overlays.items()
+                if TILE_SYMBOL_TO_KIND.get(symbol) == entity_name
+            )
+        return frozenset(base)
 
     @property
     def player_positions(self):
@@ -53,7 +61,7 @@ class BoardState:
 
     @property
     def aqua_positions(self):
-        return self.positions("aqua")
+        return self.positions("aqua", include_overlays=True)
 
     @property
     def box_positions(self):
@@ -88,12 +96,36 @@ class BoardState:
     def is_counter(self, r, c):
         return (r, c) in self._counters
 
-    def set(self, r, c, val):
+    def overlay_symbol(self, r, c):
+        return self._overlays.get((r, c))
+
+    def overlay_kind(self, r, c):
+        symbol = self.overlay_symbol(r, c)
+        if symbol is None:
+            return None
+        return TILE_SYMBOL_TO_KIND.get(symbol)
+
+    def add_overlay(self, kind, pos):
+        if kind not in TILE_DYNAMIC_KINDS:
+            raise ValueError(f"add_overlay: unsupported kind '{kind}'")
+        symbol = TILE_KIND_TO_SYMBOL[kind]
+        self._overlays[pos] = symbol
+
+    def set(self, r, c, val, *, preserve_symbol: str | None = None):
         if not self.in_bounds(r, c):
             raise ValueError(f"set: out of bounds {(r, c)}")
 
         if val == ".":
-            val = self._base[r][c]
+            overlay_symbol = self._overlays.pop((r, c), None)
+            if overlay_symbol:
+                val = overlay_symbol
+            else:
+                val = self._base[r][c]
+        else:
+            if preserve_symbol:
+                self._overlays[(r, c)] = preserve_symbol
+            else:
+                self._overlays.pop((r, c), None)
 
         old_symbol = self.grid[r][c]
         if old_symbol == val and not self._symbol_is_counter(val):
@@ -123,7 +155,7 @@ class BoardState:
                 neighbors.append((nr, nc))
         return neighbors
 
-    def update_entity(self, kind, old_pos, new_pos):
+    def update_entity(self, kind, old_pos, new_pos, *, preserve_symbol: str | None = None):
         if kind not in TILE_DYNAMIC_KINDS:
             raise ValueError(f"update_entity: unsupported kind '{kind}'")
 
@@ -134,7 +166,7 @@ class BoardState:
 
         symbol = TILE_KIND_TO_SYMBOL[kind]
         self.set(olr, olc, ".")
-        self.set(nr, nc, symbol)
+        self.set(nr, nc, symbol, preserve_symbol=preserve_symbol)
 
     def add_entity(self, kind, pos):
         if kind not in TILE_DYNAMIC_KINDS:
@@ -151,6 +183,10 @@ class BoardState:
         r, c = pos
         if not self.in_bounds(r, c):
             raise ValueError(f"remove_entity {kind}: out of bounds {pos}")
+        overlay_symbol = self._overlays.get((r, c))
+        if overlay_symbol and TILE_SYMBOL_TO_KIND.get(overlay_symbol) == kind:
+            self._overlays.pop((r, c), None)
+            return
         self.set(r, c, ".")
 
     def tick_counters(self):
@@ -194,3 +230,6 @@ class Board:
         if item == "state":
             raise AttributeError
         return getattr(self.state, item)
+
+    def add_overlay(self, kind, pos):
+        return self.state.add_overlay(kind, pos)
