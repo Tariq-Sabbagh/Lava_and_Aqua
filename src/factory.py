@@ -1,16 +1,23 @@
 from dataclasses import dataclass
 
 from src.Board import Board
-from src.Move import Actions
-from src.Rules import Rules
 from src.level_data import LevelRepository
+from src.rules_engine import (
+    LavaContactRule,
+    LavaSpreadHitRule,
+    PlayerGoalRule,
+    RulesEngine,
+)
+from src.systems import CounterSystem, MovementSystem, SpreadSystem
 
 
 @dataclass
 class GameContext:
     board: Board
-    actions: Actions
-    rules: Rules
+    movement: MovementSystem
+    spread: SpreadSystem
+    counter: CounterSystem
+    rules_engine: RulesEngine
 
 
 class GameFactory:
@@ -23,6 +30,20 @@ class GameFactory:
     def create(self, level_number):
         layout = self.repository.load(level_number)
         board = Board(layout)
-        actions = Actions(board)
-        rules = Rules(board, actions)
-        return GameContext(board=board, actions=actions, rules=rules)
+        movement = MovementSystem(board)
+        spread = SpreadSystem(board)
+        counter = CounterSystem(board)
+        rules_engine = RulesEngine(
+            handlers=[
+                LavaContactRule(),
+                PlayerGoalRule(),
+                LavaSpreadHitRule(),
+            ]
+        )
+        return GameContext(
+            board=board,
+            movement=movement,
+            spread=spread,
+            counter=counter,
+            rules_engine=rules_engine,
+        )
