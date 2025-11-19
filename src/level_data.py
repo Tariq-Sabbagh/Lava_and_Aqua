@@ -20,6 +20,7 @@ class LevelLayout:
     raw_grid: Tuple[Tuple[str, ...], ...]
     base_grid: Tuple[Tuple[str, ...], ...]
     static_goals: frozenset[Coord]
+    orbs: frozenset[Coord]
 
     def grid_copy(self) -> List[List[str]]:
         """Return a mutable copy of the raw grid values."""
@@ -58,7 +59,7 @@ class LevelRepository:
         if any(len(row) != cols for row in grid_rows):
             raise ValueError(f"Level {level_number} has inconsistent row lengths")
 
-        base_grid = self._build_base_grid(grid_rows)
+        base_grid, orbs = self._build_base_grid(grid_rows)
         static_goals = frozenset(
             (r, c)
             for r, row in enumerate(base_grid)
@@ -73,18 +74,23 @@ class LevelRepository:
             raw_grid=tuple(tuple(cell for cell in row) for row in grid_rows),
             base_grid=tuple(tuple(cell for cell in row) for row in base_grid),
             static_goals=static_goals,
+            orbs=frozenset(orbs),
         )
 
-    def _build_base_grid(self, grid_rows: Iterable[Iterable[str]]) -> List[List[str]]:
+    def _build_base_grid(self, grid_rows: Iterable[Iterable[str]]) -> Tuple[List[List[str]], List[Coord]]:
         base: List[List[str]] = []
-        for row in grid_rows:
+        orbs: List[Coord] = []
+        for r, row in enumerate(grid_rows):
             base_row: List[str] = []
-            for symbol in row:
+            for c, symbol in enumerate(row):
                 if symbol == "W":
                     base_row.append("W")
                 elif symbol == "G":
                     base_row.append("G")
+                elif symbol == "O":
+                    base_row.append(".")
+                    orbs.append((r, c))
                 else:
                     base_row.append(".")
             base.append(base_row)
-        return base
+        return base, orbs

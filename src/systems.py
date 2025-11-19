@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
 from src.Board import Board
-from src.events import CounterEvent, MoveEvent, PushEvent, SpreadEvent
+from src.events import CounterEvent, MoveEvent, OrbCollectedEvent, PushEvent, SpreadEvent
 from src.tiles import (
     BOX_PUSH_BLOCKED,
     BOX_PUSH_RULES,
@@ -80,12 +80,19 @@ class MovementSystem:
 
         push_info = None
         push_event = None
+        orb_event = None
         if tile_kind == "box":
             push_result = self._push_box((nr, nc), delta)
             if not push_result.ok:
                 return MovementResult(ok=False, reason=push_result.reason)
             push_info = push_result.info
             push_event = push_result.event
+
+        collected_orb = False
+        if tile_kind == "orb":
+            collected_orb = self.board.collect_orb((nr, nc))
+            if collected_orb:
+                orb_event = OrbCollectedEvent(position=(nr, nc), remaining=self.board.orbs_remaining)
 
         preserve_symbol = None
         if tile_kind:
@@ -105,6 +112,10 @@ class MovementSystem:
             push=push_event,
         )
 
+        events = [move_event]
+        if orb_event:
+            events.append(orb_event)
+
         return MovementResult(
             ok=True,
             data={
@@ -113,8 +124,12 @@ class MovementSystem:
                 "target": tile_symbol,
                 "on_goal": landed_goal,
                 "push": push_info,
+                "collected_orb": collected_orb,
+                "orbs_remaining": self.board.orbs_remaining,
+                "orbs_total": self.board.orbs_total,
+                "orbs_collected": self.board.orbs_total - self.board.orbs_remaining,
             },
-            events=[move_event],
+            events=events,
         )
 
     def _player_position(self) -> Coord | None:
@@ -233,7 +248,7 @@ class SpreadSystem:
                     continue
 
                 if effect.spawn and (nr, nc) not in new_cells:
-                    if tile_symbol == ".":
+                    if tile_symbol in (".", "O"):
                         floor_spawns.add((nr, nc))
                         new_cells.add((nr, nc))
                     elif tile_symbol == "P" and kind == "aqua":

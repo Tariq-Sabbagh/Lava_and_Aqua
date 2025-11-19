@@ -43,28 +43,34 @@ class GameSession:
 
         movement = self._ctx.movement.move_player(command)
         if not movement.ok:
-            data = movement.data or {}
             blocked = Result(
                 ok=False,
                 status="blocked",
                 reason=movement.reason,
-                data=data,
+                data=movement.data,
             )
-            return StepOutcome(self._attach_available_moves(blocked))
+            return StepOutcome(self._attach_metadata(blocked))
 
         events: list[object] = list(movement.events)
 
         counter_event = self._ctx.counter.tick()
         events.append(counter_event)
 
-        for kind in ("aqua", "lava"):
+        for kind in ("lava", "aqua"):
             spread_event = self._ctx.spread.spread(kind)
             events.append(spread_event)
 
         result = self._ctx.rules_engine.evaluate(events, movement.data)
-        return StepOutcome(self._attach_available_moves(result))
+        return StepOutcome(self._attach_metadata(result))
 
-    def _attach_available_moves(self, result: Result) -> Result:
+    def _attach_metadata(self, result: Result) -> Result:
         data = {**(result.data or {})}
-        data["available_moves"] = self.available_moves()
+        data.update(
+            {
+                "available_moves": self.available_moves(),
+                "orbs_remaining": self.board.orbs_remaining,
+                "orbs_total": self.board.orbs_total,
+                "orbs_collected": self.board.orbs_total - self.board.orbs_remaining,
+            }
+        )
         return Result(ok=result.ok, status=result.status, reason=result.reason, data=data)

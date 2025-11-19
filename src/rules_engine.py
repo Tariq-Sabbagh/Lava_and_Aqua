@@ -37,8 +37,11 @@ class LavaContactRule:
 
 class PlayerGoalRule:
     def evaluate(self, events: Iterable[object], base_data: dict | None) -> Result | None:
+        orbs_remaining = (base_data or {}).get("orbs_remaining", 0)
         for event in events:
             if isinstance(event, MoveEvent) and event.actor == "player" and event.landed_on_goal:
+                if orbs_remaining > 0:
+                    return None
                 return Result(ok=True, status="win", data=base_data)
         return None
 

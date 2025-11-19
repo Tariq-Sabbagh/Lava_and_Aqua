@@ -13,6 +13,7 @@ class TileType:
     category: str
     dynamic: bool = False
     preserve_when_occupied: bool = False
+    collectible: bool = False
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,7 @@ _TILE_TYPES: Tuple[TileType, ...] = (
     TileType("floor", ".", "terrain"),
     TileType("wall", "W", "terrain"),
     TileType("goal", "G", "terrain"),
+    TileType("orb", "O", "collectible"),
     TileType("player", "P", "entity", dynamic=True),
     TileType("lava", "L", "entity", dynamic=True),
     TileType("aqua", "A", "entity", dynamic=True, preserve_when_occupied=True),
@@ -48,6 +50,8 @@ DYNAMIC_KINDS = {name for name, tile in TILE_TYPES.items() if tile.dynamic}
 SPREAD_RULES: Dict[Tuple[str, str], SpreadEffect] = {
     ("lava", "floor"): SpreadEffect(spawn=True),
     ("aqua", "floor"): SpreadEffect(spawn=True),
+    ("lava", "orb"): SpreadEffect(spawn=True),
+    ("aqua", "orb"): SpreadEffect(spawn=True),
     ("lava", "player"): SpreadEffect(hits_player=True),
     ("lava", "aqua"): SpreadEffect(convert_to_kind="wall", convert_location="source"),
     ("aqua", "lava"): SpreadEffect(convert_to_kind="wall"),

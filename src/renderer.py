@@ -43,6 +43,7 @@ class GameRenderer:
         "L": TileTheme((220, 80, 30), (255, 160, 120)),
         "A": TileTheme((40, 180, 220), (120, 230, 255)),
         "B": TileTheme((200, 170, 90), (255, 220, 120)),
+        "O": TileTheme((255, 215, 0), (255, 255, 255)),
     }
 
     COUNTER_THEME = TileTheme((90, 75, 160), (150, 130, 210))

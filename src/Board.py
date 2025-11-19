@@ -24,6 +24,8 @@ class BoardState:
         self.grid = layout.grid_copy()
         self._base = layout.base_copy()
         self._static_goals = set(layout.static_goals)
+        self._orbs: Set[Coord] = set(layout.orbs)
+        self._total_orbs = len(layout.orbs)
         self._counters: Dict[Coord, int] = {}
         self._entities: Dict[str, Set[Coord]] = {kind: set() for kind in TILE_DYNAMIC_KINDS}
         self._overlays: Dict[Coord, str] = {}
@@ -38,6 +40,8 @@ class BoardState:
     def positions(self, entity_name: str, include_overlays: bool = False):
         if entity_name == "goal":
             return frozenset(self._static_goals)
+        if entity_name == "orb":
+            return frozenset(self._orbs)
         base = set(self._entities.get(entity_name, set()))
         if include_overlays:
             base.update(
@@ -69,6 +73,24 @@ class BoardState:
 
     def is_goal_cell(self, r, c):
         return (r, c) in self._static_goals
+
+    @property
+    def orbs_remaining(self) -> int:
+        return len(self._orbs)
+
+    @property
+    def orbs_total(self) -> int:
+        return self._total_orbs
+
+    def has_orb(self, pos: Coord) -> bool:
+        return pos in self._orbs
+
+    def collect_orb(self, pos: Coord) -> bool:
+        if pos in self._orbs:
+            self._orbs.remove(pos)
+            self.set(*pos, ".")
+            return True
+        return False
 
     def _scan_entities(self):
         found: Dict[str, Set[Coord]] = {kind: set() for kind in TILE_DYNAMIC_KINDS}
@@ -138,6 +160,9 @@ class BoardState:
 
         if self._symbol_is_counter(old_symbol):
             self._counters.pop((r, c), None)
+
+        if old_symbol == "O":
+            self._orbs.discard((r, c))
 
         old_kind = TILE_SYMBOL_TO_KIND.get(old_symbol)
         if old_kind in self._entities:
@@ -233,3 +258,11 @@ class Board:
 
     def add_overlay(self, kind, pos):
         return self.state.add_overlay(kind, pos)
+
+    @property
+    def orbs_remaining(self):
+        return self.state.orbs_remaining
+
+    @property
+    def orbs_total(self):
+        return self.state.orbs_total

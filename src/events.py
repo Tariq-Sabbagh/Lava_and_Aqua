@@ -38,3 +38,9 @@ class SpreadEvent:
 class CounterEvent:
     removed: FrozenSet[Coord]
     updated: Dict[Coord, int]
+
+
+@dataclass(frozen=True)
+class OrbCollectedEvent:
+    position: Coord
+    remaining: int
