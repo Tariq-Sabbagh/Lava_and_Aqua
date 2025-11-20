@@ -42,6 +42,7 @@ class PlayerGoalRule:
             if isinstance(event, MoveEvent) and event.actor == "player" and event.landed_on_goal:
                 if orbs_remaining > 0:
                     return None
+                print("you win")
                 return Result(ok=True, status="win", data=base_data)
         return None
 

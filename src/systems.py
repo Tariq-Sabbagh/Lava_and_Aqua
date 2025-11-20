@@ -64,6 +64,9 @@ class MovementSystem:
             return MovementResult(ok=False, reason="invalid_move_key")
 
         start = self._player_position()
+        for pos in self.board.neighbors4(start[0], start[1]):
+            if(self._can_move(pos , (0,0))):
+                print(pos)
         if start is None:
             return MovementResult(ok=False, reason="no_player")
 
@@ -248,10 +251,10 @@ class SpreadSystem:
                     continue
 
                 if effect.spawn and (nr, nc) not in new_cells:
-                    if tile_symbol in (".", "O"):
+                    if tile_symbol in ("."):
                         floor_spawns.add((nr, nc))
                         new_cells.add((nr, nc))
-                    elif tile_symbol == "P" and kind == "aqua":
+                    elif tile_symbol in ("P","O") and kind == "aqua":
                         overlay_spawns.add((nr, nc))
                         new_cells.add((nr, nc))
 

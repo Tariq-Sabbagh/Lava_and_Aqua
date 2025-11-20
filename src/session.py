@@ -56,7 +56,7 @@ class GameSession:
         counter_event = self._ctx.counter.tick()
         events.append(counter_event)
 
-        for kind in ("lava", "aqua"):
+        for kind in ("aqua", "lava"):
             spread_event = self._ctx.spread.spread(kind)
             events.append(spread_event)
 

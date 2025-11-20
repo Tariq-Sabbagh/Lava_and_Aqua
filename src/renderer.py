@@ -196,7 +196,6 @@ def play_with_renderer(level: int, factory) -> None:
                 session.reset()
                 renderer = GameRenderer(session.board)
                 continue
-
             outcome = session.step(cmd).result
             if outcome.status == "blocked":
                 print(f"blocked: {outcome.reason or 'unknown'}")
