@@ -1,7 +1,3 @@
-"""Rules engine evaluating domain events to produce outcomes."""
-
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Iterable, List, Protocol
 

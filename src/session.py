@@ -1,6 +1,3 @@
-"""Shared game session orchestration for Lava & Aqua."""
-
-from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Dict, Tuple
@@ -11,14 +8,11 @@ from src.result import Result
 
 @dataclass
 class StepOutcome:
-    """Wrapper for per-command results so we can return move data on success."""
 
     result: Result
 
 
 class GameSession:
-    """Owns a GameContext lifecycle and encapsulates a full turn flow."""
-
     def __init__(self, factory: GameFactory, level_number: int):
         self.factory = factory
         self.level_number = level_number
@@ -39,8 +33,6 @@ class GameSession:
         self._ctx = self.factory.create(self.level_number)
 
     def step(self, command: str) -> StepOutcome:
-        """Process one player command and all automatic follow-up actions."""
-
         movement = self._ctx.movement.move_player(command)
         if not movement.ok:
             blocked = Result(

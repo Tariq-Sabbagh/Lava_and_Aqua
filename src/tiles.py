@@ -1,7 +1,3 @@
-"""Tile metadata and interaction registry for Lava & Aqua."""
-
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Dict, Iterable, Tuple
 

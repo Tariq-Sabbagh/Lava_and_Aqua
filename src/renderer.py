@@ -1,11 +1,3 @@
-"""
-Pygame renderer for the Lava & Aqua board.
-
-This module stays optional: importing it requires pygame to be installed,
-but the CLI game loop continues to work without it.
-"""
-
-from __future__ import annotations
 import time
 from dataclasses import dataclass
 from typing import Tuple
@@ -26,14 +18,11 @@ Color = Tuple[int, int, int]
 
 @dataclass(frozen=True)
 class TileTheme:
-    """Defines fill/outline colors for a tile type."""
-
     fill: Color
     border: Color
 
 
 class GameRenderer:
-    """Minimal Pygame renderer handling drawing and simple animations."""
 
     DEFAULT_THEME = {
         ".": TileTheme((30, 30, 30), (45, 45, 45)),
@@ -66,7 +55,6 @@ class GameRenderer:
     # ------------------------------------------------------------------ Drawing
 
     def draw_board(self) -> None:
-        """Blit the entire board state to the screen."""
         for r, row in enumerate(self.board.grid):
             for c, symbol in enumerate(row):
                 rect = pygame.Rect(
@@ -94,10 +82,6 @@ class GameRenderer:
     # ----------------------------------------------------------- Input helpers
 
     def next_command(self) -> str | None:
-        """
-        Poll pygame events and translate arrow/WASD inputs into move commands.
-        Returns "W", "A", "S", "D", "Q" or None if no actionable input was found.
-        """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return "Q"
@@ -127,10 +111,6 @@ class GameRenderer:
         symbol: str = "P",
         duration_ms: int = 150,
     ) -> None:
-        """
-        Simple lerp animation between start and end cells for the provided symbol.
-        Call this after a successful move to smooth the transition.
-        """
         start_px = self._cell_center(start)
         end_px = self._cell_center(end)
         duration = max(duration_ms / 1000.0, 0.01)
@@ -167,7 +147,6 @@ class GameRenderer:
     # ---------------------------------------------------------------- Utility
 
     def tick(self) -> None:
-        """Cap the frame rate; call once per loop iteration."""
         self.clock.tick(self.fps)
 
     def close(self) -> None:
@@ -175,10 +154,6 @@ class GameRenderer:
 
 
 def play_with_renderer(level: int, factory) -> None:
-    """
-    Convenience helper to run the existing logic with the renderer.
-    This keeps main.py clean while demonstrating how to integrate Pygame.
-    """
     session = GameSession(factory, level)
     renderer = GameRenderer(session.board)
     try:

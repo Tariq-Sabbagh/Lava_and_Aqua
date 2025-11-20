@@ -1,7 +1,3 @@
-"""Domain events emitted by systems during a Lava & Aqua turn."""
-
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Dict, FrozenSet, Tuple
 
