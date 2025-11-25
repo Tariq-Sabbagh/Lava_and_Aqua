@@ -266,7 +266,7 @@ class SpreadSystem:
                     continue
 
                 if effect.spawn and (nr, nc) not in new_cells:
-                    if tile_kind == "floor" and not contains_orb:
+                    if tile_kind in ("floor", "h_block") and not contains_orb:
                         floor_spawns.add((nr, nc))
                         new_cells.add((nr, nc))
                     elif contains_orb and tile_kind in ("floor", "goal", "orb"):
