@@ -24,6 +24,7 @@ class SpreadEffect:
 class PushEffect:
     allowed: bool
     removes_kind: str | None = None
+    preserve_symbol: str | None = None
 
 
 _TILE_TYPES: Tuple[TileType, ...] = (
@@ -59,6 +60,7 @@ BOX_PUSH_RULES: Dict[str, PushEffect] = {
     "goal": PushEffect(allowed=False),
     "lava": PushEffect(allowed=True, removes_kind="lava"),
     "aqua": PushEffect(allowed=True, removes_kind="aqua"),
+    "orb": PushEffect(allowed=True, preserve_symbol="O"),
 }
 
 BOX_PUSH_BLOCKED = PushEffect(allowed=False)

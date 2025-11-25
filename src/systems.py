@@ -182,16 +182,19 @@ class MovementSystem:
             return PushResult(ok=False, reason=reason)
 
         neutralized_kind = interaction.removes_kind
+        preserve_symbol = interaction.preserve_symbol
         neutralized_lava = False
         neutralized_aqua = False
         if neutralized_kind:
             self.board.remove_entity(neutralized_kind, dest)
             neutralized_lava = neutralized_kind == "lava"
             neutralized_aqua = neutralized_kind == "aqua"
-        elif tile_kind not in ("floor", "goal") and tile_symbol not in (".", "G"):
-            return PushResult(ok=False, reason=f"box_hits_{tile_symbol}")
+        else:
+            allowed_static = preserve_symbol or tile_kind in ("floor", "goal", "orb") or tile_symbol in (".", "G")
+            if not allowed_static:
+                return PushResult(ok=False, reason=f"box_hits_{tile_symbol}")
 
-        self.board.update_entity("box", box_pos, dest)
+        self.board.update_entity("box", box_pos, dest, preserve_symbol=preserve_symbol)
 
         push_event = PushEvent(from_pos=box_pos, to_pos=dest, neutralized_kind=neutralized_kind)
         return PushResult(

@@ -160,7 +160,8 @@ class BoardState:
         if self._symbol_is_counter(old_symbol):
             self._counters.pop((r, c), None)
 
-        if old_symbol == "O":
+        preserve_same_symbol = preserve_symbol == old_symbol
+        if old_symbol == "O" and not preserve_same_symbol:
             self._orbs.discard((r, c))
 
         old_kind = TILE_SYMBOL_TO_KIND.get(old_symbol)

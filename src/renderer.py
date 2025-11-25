@@ -60,12 +60,22 @@ class GameRenderer:
                 rect = pygame.Rect(
                     c * self.cell_size, r * self.cell_size, self.cell_size, self.cell_size
                 )
-                theme = self._theme_for_symbol(symbol)
+                overlay = self.board.overlay_symbol(r, c)
+
+                base_symbol = symbol
+                if symbol == "O":
+                    base_symbol = self.board.cell_base(r, c)
+
+                theme = self._theme_for_symbol(base_symbol)
                 pygame.draw.rect(self.display, theme.fill, rect)
                 pygame.draw.rect(self.display, theme.border, rect, width=2)
 
                 if symbol.isdigit():
                     self._draw_counter_value(symbol, rect)
+                if symbol == "O":
+                    self._draw_orb(rect)
+                if overlay == "O":
+                    self._draw_orb(rect)
 
         pygame.display.flip()
 
@@ -73,6 +83,14 @@ class GameRenderer:
         text = self.font.render(value, True, (255, 255, 255))
         text_rect = text.get_rect(center=rect.center)
         self.display.blit(text, text_rect)
+
+    def _draw_orb(self, rect: pygame.Rect) -> None:
+        center = rect.center
+        theme = self.DEFAULT_THEME["O"]
+        outer_radius = self.cell_size * 0.22
+        inner_radius = outer_radius * 0.6
+        pygame.draw.circle(self.display, theme.border, center, outer_radius)
+        pygame.draw.circle(self.display, theme.fill, center, inner_radius)
 
     def _theme_for_symbol(self, symbol: str) -> TileTheme:
         if symbol.isdigit():
