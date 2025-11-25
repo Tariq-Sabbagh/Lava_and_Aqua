@@ -85,11 +85,16 @@ class BoardState:
         return pos in self._orbs
 
     def collect_orb(self, pos: Coord) -> bool:
-        if pos in self._orbs:
-            self._orbs.remove(pos)
-            self.set(*pos, ".")
-            return True
-        return False
+        if pos not in self._orbs:
+            return False
+
+        self._orbs.remove(pos)
+        r, c = pos
+        # Only clear the cell if the orb is the visible symbol; if another
+        # entity is occupying the tile, leave it in place.
+        if self.grid[r][c] == "O":
+            self.set(r, c, ".")
+        return True
 
     def _scan_entities(self):
         found: Dict[str, Set[Coord]] = {kind: set() for kind in TILE_DYNAMIC_KINDS}
@@ -132,7 +137,7 @@ class BoardState:
         symbol = TILE_KIND_TO_SYMBOL[kind]
         self._overlays[pos] = symbol
 
-    def set(self, r, c, val, *, preserve_symbol: str | None = None):
+    def set(self, r, c, val, *, preserve_symbol: str | None = None, preserve_orb: bool = False):
         if not self.in_bounds(r, c):
             raise ValueError(f"set: out of bounds {(r, c)}")
 
@@ -161,7 +166,7 @@ class BoardState:
             self._counters.pop((r, c), None)
 
         preserve_same_symbol = preserve_symbol == old_symbol
-        if old_symbol == "O" and not preserve_same_symbol:
+        if old_symbol == "O" and not preserve_same_symbol and not preserve_orb:
             self._orbs.discard((r, c))
 
         old_kind = TILE_SYMBOL_TO_KIND.get(old_symbol)
@@ -193,14 +198,14 @@ class BoardState:
         self.set(olr, olc, ".")
         self.set(nr, nc, symbol, preserve_symbol=preserve_symbol)
 
-    def add_entity(self, kind, pos):
+    def add_entity(self, kind, pos, *, preserve_symbol: str | None = None, preserve_orb: bool = False):
         if kind not in TILE_DYNAMIC_KINDS:
             raise ValueError(f"add_entity: unsupported kind '{kind}'")
         r, c = pos
         if not self.in_bounds(r, c):
             raise ValueError(f"add_entity {kind}: out of bounds {pos}")
         symbol = TILE_KIND_TO_SYMBOL[kind]
-        self.set(r, c, symbol)
+        self.set(r, c, symbol, preserve_symbol=preserve_symbol, preserve_orb=preserve_orb)
 
     def remove_entity(self, kind, pos):
         if kind not in TILE_DYNAMIC_KINDS:

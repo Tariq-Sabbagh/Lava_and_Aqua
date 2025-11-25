@@ -76,6 +76,8 @@ class MovementSystem:
 
         tile_symbol = self.board.get(nr, nc)
         tile_kind = SYMBOL_TO_KIND.get(tile_symbol)
+        contains_orb = self.board.has_orb((nr, nc))
+        target_kind = "orb" if contains_orb and tile_kind != "lava" else tile_kind
 
         push_info = None
         push_event = None
@@ -88,7 +90,7 @@ class MovementSystem:
             push_event = push_result.event
 
         collected_orb = False
-        if tile_kind == "orb":
+        if contains_orb and tile_kind != "lava":
             collected_orb = self.board.collect_orb((nr, nc))
             if collected_orb:
                 orb_event = OrbCollectedEvent(position=(nr, nc), remaining=self.board.orbs_remaining)
@@ -106,7 +108,7 @@ class MovementSystem:
             actor="player",
             origin=start,
             destination=(nr, nc),
-            target_kind=tile_kind,
+            target_kind=target_kind,
             landed_on_goal=landed_goal,
             push=push_event,
         )
@@ -217,6 +219,7 @@ class SpreadSystem:
         initial_sources = self.board.positions(kind, include_overlays=True)
         new_cells = set()
         floor_spawns = set()
+        orb_spawns = set()
         overlay_spawns = set()
         hits_player = False
         new_walls = set()
@@ -227,9 +230,14 @@ class SpreadSystem:
                 if tile_symbol.isdigit() or tile_symbol == "W":
                     continue
 
+                contains_orb = self.board.has_orb((nr, nc))
                 overlay_kind = self.board.overlay_kind(nr, nc)
                 tile_kind = overlay_kind or SYMBOL_TO_KIND.get(tile_symbol)
-                effect = SPREAD_RULES.get((kind, tile_kind))
+                target_kind = tile_kind
+                if contains_orb and tile_kind in ("floor", "goal", "orb"):
+                    target_kind = "orb"
+
+                effect = SPREAD_RULES.get((kind, target_kind))
                 if effect is None:
                     if tile_symbol == "P" and kind == "lava":
                         hits_player = True
@@ -250,15 +258,20 @@ class SpreadSystem:
                     continue
 
                 if effect.spawn and (nr, nc) not in new_cells:
-                    if tile_symbol in ("."):
+                    if tile_kind == "floor" and not contains_orb:
                         floor_spawns.add((nr, nc))
                         new_cells.add((nr, nc))
-                    elif tile_symbol in ("P","O") and kind == "aqua":
+                    elif contains_orb and tile_kind in ("floor", "goal", "orb"):
+                        orb_spawns.add((nr, nc))
+                        new_cells.add((nr, nc))
+                    elif tile_symbol == "P" and kind == "aqua":
                         overlay_spawns.add((nr, nc))
                         new_cells.add((nr, nc))
 
         for pos in floor_spawns:
             self.board.add_entity(kind, pos)
+        for pos in orb_spawns:
+            self.board.add_entity(kind, pos, preserve_orb=True)
         for pos in overlay_spawns:
             self.board.add_overlay(kind, pos)
 

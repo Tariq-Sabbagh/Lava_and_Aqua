@@ -2,15 +2,19 @@ from src.factory import GameFactory
 from src.renderer import play_with_renderer
 from src.session import GameSession
 
-def print_board(grid):
-    for row in grid:
-        print(" ".join(row))
+def print_board(board):
+    for r, row in enumerate(board.grid):
+        display_row = []
+        for c, symbol in enumerate(row):
+            display_symbol = "O" if board.has_orb((r, c)) else symbol
+            display_row.append(display_symbol)
+        print(" ".join(display_row))
     print()
 
 def game_loop(session: GameSession):
     board = session.board
 
-    print_board(board.grid)
+    print_board(board)
     print("Controls: W/A/S/D to move, Q to quit.\n")
 
     while True:
@@ -27,7 +31,7 @@ def game_loop(session: GameSession):
             print("initial board.")
             session.reset()
             board = session.board
-            print_board(board.grid)
+            print_board(board)
             continue
         elif cmd not in ("W","A","S","D"):
             print("invalid key.")
@@ -39,20 +43,20 @@ def game_loop(session: GameSession):
 
         if outcome.status == "blocked":
             print(f"blocked: {outcome.reason or 'unknown'}")
-            print_board(board.grid)
+            print_board(board)
             continue
         
         if outcome.status == "win":
-            print_board(board.grid)
+            print_board(board)
             print("YOU WIN!")
             break
 
         if outcome.status == "lose":
-            print_board(board.grid)
+            print_board(board)
             print(f"YOU LOSE! ({outcome.reason or 'move failed'})")
             break
 
-        print_board(board.grid)
+        print_board(board)
 
 def main():
     try:

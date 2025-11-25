@@ -60,7 +60,7 @@ class GameRenderer:
                 rect = pygame.Rect(
                     c * self.cell_size, r * self.cell_size, self.cell_size, self.cell_size
                 )
-                overlay = self.board.overlay_symbol(r, c)
+                has_orb = self.board.has_orb((r, c))
 
                 base_symbol = symbol
                 if symbol == "O":
@@ -72,9 +72,7 @@ class GameRenderer:
 
                 if symbol.isdigit():
                     self._draw_counter_value(symbol, rect)
-                if symbol == "O":
-                    self._draw_orb(rect)
-                if overlay == "O":
+                if has_orb:
                     self._draw_orb(rect)
 
         pygame.display.flip()
