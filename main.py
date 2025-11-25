@@ -15,7 +15,7 @@ def game_loop(session: GameSession):
     board = session.board
 
     print_board(board)
-    print("Controls: W/A/S/D to move, Q to quit.\n")
+    print("Controls: W/A/S/D to move, U to undo, Q to quit.\n")
 
     while True:
         try:
@@ -33,7 +33,7 @@ def game_loop(session: GameSession):
             board = session.board
             print_board(board)
             continue
-        elif cmd not in ("W","A","S","D"):
+        elif cmd not in ("W","A","S","D","U"):
             print("invalid key.")
             continue
         

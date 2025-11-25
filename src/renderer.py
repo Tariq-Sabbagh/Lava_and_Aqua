@@ -107,6 +107,7 @@ class GameRenderer:
                     pygame.K_s: "S",
                     pygame.K_a: "A",
                     pygame.K_d: "D",
+                    pygame.K_u: "U",
                     pygame.K_UP: "W",
                     pygame.K_DOWN: "S",
                     pygame.K_LEFT: "A",
@@ -196,6 +197,9 @@ def play_with_renderer(level: int, factory) -> None:
                 data = outcome.data or {}
                 if data.get("from") and data.get("to"):
                     renderer.animate_move(data["from"], data["to"])
+            elif outcome.status == "undo":
+                renderer.draw_board()
+                continue
             elif outcome.status in ("win", "lose"):
                 renderer.draw_board()
                 time.sleep(1.5)
