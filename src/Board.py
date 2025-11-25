@@ -243,6 +243,15 @@ class BoardState:
     def is_wall(self, r, c):
         return self.grid[r][c] in ("W", "H") or self.is_counter(r, c)
 
+    def signature(self):
+        """Hashable snapshot of the current board state for search/visited tracking."""
+        grid_sig = tuple(tuple(row) for row in self.grid)
+        base_sig = tuple(tuple(row) for row in self._base)
+        overlays_sig = tuple(sorted(self._overlays.items()))
+        counters_sig = tuple(sorted(self._counters.items()))
+        orbs_sig = tuple(sorted(self._orbs))
+        return (grid_sig, base_sig, overlays_sig, counters_sig, orbs_sig)
+
 
 class Board:
     """Facade combining an immutable layout with a mutable BoardState."""

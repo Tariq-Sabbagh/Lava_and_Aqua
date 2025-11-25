@@ -1,5 +1,6 @@
 from src.factory import GameFactory
 from src.renderer import play_with_renderer
+from src.solver import BFSSolver
 from src.session import GameSession
 
 def print_board(board):
@@ -65,8 +66,27 @@ def main():
         print("invalid level number.")
         return
 
-    use_renderer = input("Run with Pygame renderer? (y/N): ").strip().lower() == "y"
+    mode = input("Play yourself or let BFS solve? (p = play / a = auto): ").strip().lower()
+    use_renderer = False
+    if mode == "p":
+        use_renderer = input("Run with Pygame renderer? (y/N): ").strip().lower() == "y"
     factory = GameFactory()
+    if mode == "a":
+        solver = BFSSolver(factory, level)
+        solution = solver.solve()
+        if solution is None:
+            print("No solution found with BFS.")
+            return
+        print(f"BFS found a solution in {len(solution)} moves:")
+        print(" -> ".join(solution))
+        session = GameSession(factory, level)
+        for move in solution:
+            outcome = session.step(move).result
+            print(f"Move {move}: {outcome.status}")
+            print_board(session.board)
+            if outcome.status in ("win", "lose"):
+                break
+        return
     if use_renderer:
         play_with_renderer(level, factory)
     else:
