@@ -30,6 +30,7 @@ class PushEffect:
 _TILE_TYPES: Tuple[TileType, ...] = (
     TileType("floor", ".", "terrain"),
     TileType("wall", "W", "terrain"),
+    TileType("h_block", "H", "terrain"),
     TileType("goal", "G", "terrain"),
     TileType("orb", "O", "collectible"),
     TileType("player", "P", "entity", dynamic=True),
@@ -47,6 +48,8 @@ DYNAMIC_KINDS = {name for name, tile in TILE_TYPES.items() if tile.dynamic}
 SPREAD_RULES: Dict[Tuple[str, str], SpreadEffect] = {
     ("lava", "floor"): SpreadEffect(spawn=True),
     ("aqua", "floor"): SpreadEffect(spawn=True),
+    ("lava", "h_block"): SpreadEffect(spawn=True),
+    ("aqua", "h_block"): SpreadEffect(spawn=True),
     ("lava", "orb"): SpreadEffect(spawn=True),
     ("aqua", "orb"): SpreadEffect(spawn=True),
     ("lava", "player"): SpreadEffect(hits_player=True),

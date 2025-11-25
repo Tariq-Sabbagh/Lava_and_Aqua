@@ -83,6 +83,8 @@ class LevelRepository:
                     base_row.append("W")
                 elif symbol == "G":
                     base_row.append("G")
+                elif symbol == "H":
+                    base_row.append("H")
                 elif symbol == "O":
                     base_row.append(".")
                     orbs.append((r, c))

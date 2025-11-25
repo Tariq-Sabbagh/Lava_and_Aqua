@@ -241,7 +241,7 @@ class BoardState:
         return 0 <= r < self.rows and 0 <= c < self.cols
 
     def is_wall(self, r, c):
-        return self.grid[r][c] == "W" or self.is_counter(r, c)
+        return self.grid[r][c] in ("W", "H") or self.is_counter(r, c)
 
 
 class Board:

@@ -27,6 +27,7 @@ class GameRenderer:
     DEFAULT_THEME = {
         ".": TileTheme((30, 30, 30), (45, 45, 45)),
         "W": TileTheme((70, 70, 70), (110, 110, 110)),
+        "H": TileTheme((210, 45, 35), (25, 25, 25)),
         "P": TileTheme((60, 140, 255), (255, 255, 255)),
         "G": TileTheme((70, 200, 120), (255, 255, 255)),
         "L": TileTheme((220, 80, 30), (255, 160, 120)),
@@ -70,10 +71,13 @@ class GameRenderer:
                 pygame.draw.rect(self.display, theme.fill, rect)
                 pygame.draw.rect(self.display, theme.border, rect, width=2)
 
+                base_is_h = self.board.cell_base(r, c) == "H"
                 if symbol.isdigit():
                     self._draw_counter_value(symbol, rect)
                 if has_orb:
                     self._draw_orb(rect)
+                if base_is_h:
+                    self._draw_h_tile(rect)
 
         pygame.display.flip()
 
@@ -160,6 +164,22 @@ class GameRenderer:
         theme = self._theme_for_symbol(symbol)
         pygame.draw.circle(self.display, theme.fill, pos, radius)
         pygame.draw.circle(self.display, theme.border, pos, radius, width=3)
+
+    def _draw_h_tile(self, rect: pygame.Rect) -> None:
+        gap = self.cell_size * 0.14
+        size = self.cell_size * 0.26
+        square_fill = (115, 190, 220)
+        square_border = (25, 55, 75)
+        positions = [
+            (rect.left + gap, rect.top + gap),
+            (rect.right - gap - size, rect.top + gap),
+            (rect.left + gap, rect.bottom - gap - size),
+            (rect.right - gap - size, rect.bottom - gap - size),
+        ]
+        for x, y in positions:
+            square = pygame.Rect(x, y, size, size)
+            pygame.draw.rect(self.display, square_fill, square, border_radius=4)
+            pygame.draw.rect(self.display, square_border, square, width=2, border_radius=4)
 
     # ---------------------------------------------------------------- Utility
 

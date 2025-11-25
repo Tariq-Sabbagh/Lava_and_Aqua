@@ -78,6 +78,8 @@ L – lava
 
 A – aqua (water)
 
+H – grate tile; blocks player/boxes but lava/aqua can spread across it
+
 W – wall
 
 . – floor (empty space)

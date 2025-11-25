@@ -73,6 +73,8 @@ class MovementSystem:
             return MovementResult(ok=False, reason="out_of_bounds")
         if self.board.is_wall(nr, nc):
             return MovementResult(ok=False, reason="wall")
+        if self.board.cell_base(nr, nc) == "H":
+            return MovementResult(ok=False, reason="wall")
 
         tile_symbol = self.board.get(nr, nc)
         tile_kind = SYMBOL_TO_KIND.get(tile_symbol)
@@ -145,6 +147,8 @@ class MovementSystem:
             return False
         if self.board.is_wall(nr, nc):
             return False
+        if self.board.cell_base(nr, nc) == "H":
+            return False
 
         tile_symbol = self.board.get(nr, nc)
         tile_kind = SYMBOL_TO_KIND.get(tile_symbol)
@@ -158,6 +162,8 @@ class MovementSystem:
         dest = (box_pos[0] + delta[0], box_pos[1] + delta[1])
         if not self.board.in_bounds(*dest):
             return False
+        if self.board.cell_base(*dest) == "H":
+            return False
         tile_symbol = self.board.get(*dest)
         if tile_symbol in ("W", "B") or tile_symbol.isdigit():
             return False
@@ -170,6 +176,8 @@ class MovementSystem:
 
         if not self.board.in_bounds(*dest):
             return PushResult(ok=False, reason="box_out_of_bounds")
+        if self.board.cell_base(*dest) == "H":
+            return PushResult(ok=False, reason="box_blocked")
 
         tile_symbol = self.board.get(*dest)
         if tile_symbol in ("W", "B") or tile_symbol.isdigit():
