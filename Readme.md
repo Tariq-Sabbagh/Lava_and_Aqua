@@ -62,6 +62,8 @@ D – right
 
 R – restart level
 
+U – undo last move (you can undo multiple turns)
+
 Q – quit
 
 ## 2. Basic game rules
@@ -102,29 +104,47 @@ Lava and aqua spread one step per turn, following simple rules.
 
 Number tiles (counters) go down every turn. When they reach zero, they disappear.
 
+Undo:
+
+- Press U to step back one full turn (your move plus spread/counters). You can undo multiple turns.
+
 ## 3. Project structure
 
 Typical layout (your paths may be slightly different):
+```bash
 
-src/
-├─ main.py          # Game entry point (CLI / renderer switch)
-├─ Board.py         # Board and board state logic
-├─ tiles.py         # Tile types and interaction rules
-├─ systems.py       # Movement, spread, and counter systems
-├─ events.py        # Domain events (Move, Spread, Counter...)
-├─ result.py        # Result type for outcomes (ok / blocked / win / lose)
-├─ level_data.py    # Level loading and layout
-├─ rules_engine.py  # Rules engine (win/lose logic)
-├─ factory.py       # GameFactory and GameContext
-├─ session.py       # GameSession: runs a full turn
-└─ renderer.py      # Pygame renderer (optional)
-levels/
-├─ level_1.json
-├─ level_2.json
-└─ ...
-
-
-You can change names, but this is the idea.
+.
+├── levels
+│   ├── level_10.json
+│   ├── level_11.json
+│   ├── level_12.json
+│   ├── level_13.json
+│   ├── level_14.json
+│   ├── level_15.json
+│   ├── level_1.json
+│   ├── level_2.json
+│   ├── level_3.json
+│   ├── level_4.json
+│   ├── level_5.json
+│   ├── level_6.json
+│   ├── level_7.json
+│   ├── level_8.json
+│   └── level_9.json
+├── main.py                 # Game entry point (CLI / renderer switch)
+├── Readme.md
+└── src
+    ├── Board.py            # Board and board state logic
+    ├── events.py           # Domain events (Move, Spread, Counter...)
+    ├── factory.py          # GameFactory and GameContext
+    ├── level_data.py       # Level loading and layout
+    ├── renderer.py         # Pygame renderer (optional)
+    ├── result.py           # Result type for outcomes (ok / blocked / win / lose)
+    ├── rules_engine.py     # Rules engine (win/lose logic)
+    ├── session.py          # GameSession: runs a full turn
+    ├── solver.py           # auot solver game
+    ├── systems.py          # Movement, spread, and counter systems
+    └── tiles.py            # Tile types and interaction rules
+```
 
 ## 4. Main entry – CLI loop
 
@@ -217,6 +237,20 @@ calls session.step(...),
 checks if you win, lose, or are blocked,
 
 prints the board.
+
+## 5. Auto solver
+
+You can let the game solve itself:
+
+1) At startup, choose `a` for auto mode.
+2) Choose solver: `b` for BFS (breadth-first) or `d` for DFS (depth-first).
+3) Optionally show solver playback in Pygame.
+
+Details:
+
+- Solver uses the same rules as the player: move resolution, counters, lava/aqua spread, win/lose checks.
+- Stats reported after solving: path length (moves), attempts (nodes expanded), visited states, and elapsed time.
+- With Pygame playback, each solver step is animated with an overlay showing live stats (moves, attempts, visited, elapsed). After a win, the final stats remain on-screen for 3 minutes with a countdown.
 
 ## 5. Turn flow (what happens each move)
 
