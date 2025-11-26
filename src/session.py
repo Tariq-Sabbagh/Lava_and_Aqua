@@ -65,7 +65,6 @@ class GameSession:
         result = self._ctx.rules_engine.evaluate(events, movement.data)
         return StepOutcome(self._attach_metadata(result))
 
-    # ----------------------------------------------------------- Undo helpers
 
     def _snapshot_state(self) -> BoardState:
         return copy.deepcopy(self._ctx.board.state)
