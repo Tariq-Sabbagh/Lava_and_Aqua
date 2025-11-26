@@ -19,6 +19,13 @@ class Node:
     action: Optional[Move]
 
 
+@dataclass
+class SolveResult:
+    moves: List[Move]
+    attempts: int
+    visited: int
+
+
 class StackFrontier:
     """LIFO frontier; useful for DFS."""
 
@@ -53,7 +60,7 @@ class BFSSolver:
         self.factory = factory
         self.level_number = level_number
 
-    def solve(self) -> List[Move] | None:
+    def solve(self) -> SolveResult | None:
         context = self.factory.create(self.level_number)
         start_state = copy.deepcopy(context.board.state)
 
@@ -61,12 +68,15 @@ class BFSSolver:
         frontier = QueueFrontier()
         frontier.add(start)
         visited = {start_state.signature()}
+        attempts = 0
 
         while not frontier.empty():
             node = frontier.remove()
+            attempts += 1
             status, _ = self._is_goal(node.state)
             if status == "win":
-                return self._backtrack(node)
+                path = self._backtrack(node)
+                return SolveResult(moves=path, attempts=attempts, visited=len(visited))
 
             for action in MOVES:
                 result_state, result_status = self._simulate(node.state, action)
@@ -78,7 +88,8 @@ class BFSSolver:
                 visited.add(sig)
                 child = Node(state=result_state, parent=node, action=action)
                 if result_status == "win":
-                    return self._backtrack(child)
+                    path = self._backtrack(child)
+                    return SolveResult(moves=path, attempts=attempts + 1, visited=len(visited))
                 if result_status != "lose":
                     frontier.add(child)
 

@@ -80,6 +80,7 @@ class GameRenderer:
                     self._draw_h_tile(rect)
 
         pygame.display.flip()
+        return self.display
 
     def _draw_counter_value(self, value: str, rect: pygame.Rect) -> None:
         text = self.font.render(value, True, (255, 255, 255))
@@ -180,6 +181,27 @@ class GameRenderer:
             square = pygame.Rect(x, y, size, size)
             pygame.draw.rect(self.display, square_fill, square, border_radius=4)
             pygame.draw.rect(self.display, square_border, square, width=2, border_radius=4)
+
+    def draw_overlay_text(self, lines):
+        if not lines:
+            return
+        padding = 6
+        line_surfaces = [self.font.render(line, True, (255, 255, 255)) for line in lines]
+        max_width = max(surf.get_width() for surf in line_surfaces)
+        total_height = sum(surf.get_height() for surf in line_surfaces) + padding * (len(lines) + 1)
+        rect = pygame.Rect(padding, padding, max_width + padding * 2, total_height)
+        surface = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
+        surface.fill((0, 0, 0, 140))
+        y = padding
+        for surf in line_surfaces:
+            surface.blit(surf, (padding, y))
+            y += surf.get_height() + padding
+        self.display.blit(surface, (0, 0))
+
+    def render_with_overlay(self, lines):
+        self.draw_board()
+        self.draw_overlay_text(lines)
+        pygame.display.flip()
 
     # ---------------------------------------------------------------- Utility
 

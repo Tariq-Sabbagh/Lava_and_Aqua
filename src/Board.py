@@ -10,8 +10,6 @@ from src.tiles import (
 
 
 class BoardState:
-    """Mutable board data derived from an immutable LevelLayout."""
-
     DYNAMIC_KINDS = TILE_DYNAMIC_KINDS
     KIND_TO_SYMBOL = TILE_KIND_TO_SYMBOL
     SYMBOL_TO_KIND = TILE_SYMBOL_TO_KIND
@@ -244,7 +242,6 @@ class BoardState:
         return self.grid[r][c] in ("W", "H") or self.is_counter(r, c)
 
     def signature(self):
-        """Hashable snapshot of the current board state for search/visited tracking."""
         grid_sig = tuple(tuple(row) for row in self.grid)
         base_sig = tuple(tuple(row) for row in self._base)
         overlays_sig = tuple(sorted(self._overlays.items()))
@@ -254,8 +251,6 @@ class BoardState:
 
 
 class Board:
-    """Facade combining an immutable layout with a mutable BoardState."""
-
     DYNAMIC_KINDS = TILE_DYNAMIC_KINDS
     KIND_TO_SYMBOL = TILE_KIND_TO_SYMBOL
     SYMBOL_TO_KIND = TILE_SYMBOL_TO_KIND

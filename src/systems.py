@@ -160,12 +160,8 @@ class MovementSystem:
 
     def _can_push_to(self, box_pos: Coord, delta: Coord) -> bool:
         dest = (box_pos[0] + delta[0], box_pos[1] + delta[1])
-        if not self.board.in_bounds(*dest):
-            return False
-        if self.board.cell_base(*dest) == "H":
-            return False
         tile_symbol = self.board.get(*dest)
-        if tile_symbol in ("W", "B") or tile_symbol.isdigit():
+        if tile_symbol in ("W", "B") or tile_symbol.isdigit() or self.board.cell_base(*dest) == "H" or not self.board.in_bounds(*dest):
             return False
         tile_kind = SYMBOL_TO_KIND.get(tile_symbol)
         interaction = BOX_PUSH_RULES.get(tile_kind)

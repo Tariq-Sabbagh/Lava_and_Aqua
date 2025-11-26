@@ -1,5 +1,5 @@
 from src.factory import GameFactory
-from src.renderer import play_with_renderer
+from src.renderer import GameRenderer, play_with_renderer
 from src.solver import BFSSolver
 from src.session import GameSession
 
@@ -73,19 +73,59 @@ def main():
     factory = GameFactory()
     if mode == "a":
         solver = BFSSolver(factory, level)
+        auto_renderer = input("Show solver in Pygame? (y/N): ").strip().lower() == "y"
         solution = solver.solve()
         if solution is None:
             print("No solution found with BFS.")
             return
-        print(f"BFS found a solution in {len(solution)} moves:")
-        print(" -> ".join(solution))
+        print(f"BFS found a solution in {len(solution.moves)} moves (attempts: {solution.attempts}, visited: {solution.visited}).")
+        print(" -> ".join(solution.moves))
         session = GameSession(factory, level)
-        for move in solution:
-            outcome = session.step(move).result
-            print(f"Move {move}: {outcome.status}")
-            print_board(session.board)
-            if outcome.status in ("win", "lose"):
-                break
+        if auto_renderer:
+            renderer = GameRenderer(session.board)
+            renderer.render_with_overlay(
+                [
+                    "Solver: BFS",
+                    f"Path length: {len(solution.moves)}",
+                    f"Attempts: {solution.attempts}",
+                    "Starting playback...",
+                ]
+            )
+            final_status = "ok"
+            for idx, move in enumerate(solution.moves, start=1):
+                outcome = session.step(move).result
+                data = outcome.data or {}
+                renderer.render_with_overlay(
+                    [
+                        f"Solver: BFS",
+                        f"Path length: {len(solution.moves)}",
+                        f"Attempts: {solution.attempts}",
+                        f"Step {idx}/{len(solution.moves)}: {move}",
+                    ]
+                )
+                if data.get("from") and data.get("to"):
+                    renderer.animate_move(data["from"], data["to"])
+                else:
+                    renderer.draw_board()
+                if outcome.status in ("win", "lose"):
+                    final_status = outcome.status
+                    break
+            renderer.render_with_overlay(
+                [
+                    f"Solver: BFS",
+                    f"Path length: {len(solution.moves)}",
+                    f"Attempts: {solution.attempts}",
+                    f"Finished with status: {final_status}",
+                ]
+            )
+            renderer.close()
+        else:
+            for move in solution.moves:
+                outcome = session.step(move).result
+                print(f"Move {move}: {outcome.status}")
+                print_board(session.board)
+                if outcome.status in ("win", "lose"):
+                    break
         return
     if use_renderer:
         play_with_renderer(level, factory)
