@@ -86,7 +86,10 @@ def main():
             print(f"No solution found with {solver_kind.upper()}.")
             return
         label = solver_kind.upper()
-        print(f"{label} found a solution in {len(solution.moves)} moves (attempts: {solution.attempts}, visited: {solution.visited}).")
+        print(
+            f"{label} found a solution in {len(solution.moves)} moves "
+            f"(attempts: {solution.attempts}, visited: {solution.visited}, solve time: {solution.solve_time:.2f}s)."
+        )
         print(" -> ".join(solution.moves))
         session = GameSession(factory, level)
         if auto_renderer:
@@ -99,6 +102,7 @@ def main():
                     f"Moves: 0/{total_moves}",
                     f"Attempts: {solution.attempts}",
                     f"Visited: {solution.visited}",
+                    f"Solved in: {solution.solve_time:.2f}s",
                     f"Elapsed: 0.00s",
                 ]
             )
@@ -113,6 +117,7 @@ def main():
                         f"Moves: {idx}/{total_moves}",
                         f"Attempts: {solution.attempts}",
                         f"Visited: {solution.visited}",
+                        f"Solved in: {solution.solve_time:.2f}s",
                         f"Elapsed: {elapsed:.2f}s",
                         f"Step {idx}/{len(solution.moves)}: {move}",
                     ]
@@ -121,15 +126,16 @@ def main():
                     renderer.animate_move(data["from"], data["to"])
                 else:
                     renderer.render_with_overlay(
-                        [
+                    [
                         f"Solver: {label}",
                         f"Moves: {idx}/{total_moves}",
                         f"Attempts: {solution.attempts}",
                         f"Visited: {solution.visited}",
+                        f"Solved in: {solution.solve_time:.2f}s",
                         f"Elapsed: {elapsed:.2f}s",
                         f"Step {idx}/{len(solution.moves)}: {move}",
-                        ]
-                    )
+                    ]
+                )
                 if outcome.status in ("win", "lose"):
                     final_status = outcome.status
                     break
@@ -139,6 +145,7 @@ def main():
                 f"Attempts: {solution.attempts}",
                 f"Visited: {solution.visited}",
                 f"Moves: {len(solution.moves)}/{total_moves}",
+                f"Solved in: {solution.solve_time:.2f}s",
                 f"Elapsed: {elapsed:.2f}s",
                 f"Finished with status: {final_status}",
             ]

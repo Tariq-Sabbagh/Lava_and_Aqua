@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import copy
-from collections import deque
 from dataclasses import dataclass
 from typing import Iterable, List, Optional
+import time
 
 from src.factory import GameFactory
 from src.result import Result
@@ -24,6 +24,7 @@ class SolveResult:
     moves: List[Move]
     attempts: int
     visited: int
+    solve_time: float
 
 
 class StackFrontier:
@@ -57,6 +58,7 @@ class BFSSolver:
     def solve(self) -> SolveResult | None:
         context = self.factory.create(self.level_number)
         start_state = copy.deepcopy(context.board.state)
+        started = time.monotonic()
 
         start = Node(state=start_state, parent=None, action=None)
         frontier = QueueFrontier()
@@ -70,7 +72,8 @@ class BFSSolver:
             status, _ = self._is_goal(node.state)
             if status == "win":
                 path = self._backtrack(node)
-                return SolveResult(moves=path, attempts=attempts, visited=len(visited))
+                elapsed = time.monotonic() - started
+                return SolveResult(moves=path, attempts=attempts, visited=len(visited), solve_time=elapsed)
 
             for action in MOVES:
                 result_state, result_status = self._simulate(node.state, action)
@@ -83,7 +86,8 @@ class BFSSolver:
                 child = Node(state=result_state, parent=node, action=action)
                 if result_status == "win":
                     path = self._backtrack(child)
-                    return SolveResult(moves=path, attempts=attempts + 1, visited=len(visited))
+                    elapsed = time.monotonic() - started
+                    return SolveResult(moves=path, attempts=attempts + 1, visited=len(visited), solve_time=elapsed)
                 if result_status != "lose":
                     frontier.add(child)
 
@@ -129,6 +133,7 @@ class DFSSolver(BFSSolver):
     def solve(self) -> SolveResult | None:
         context = self.factory.create(self.level_number)
         start_state = copy.deepcopy(context.board.state)
+        started = time.monotonic()
 
         start = Node(state=start_state, parent=None, action=None)
         frontier = StackFrontier()
@@ -142,7 +147,8 @@ class DFSSolver(BFSSolver):
             status, _ = self._is_goal(node.state)
             if status == "win":
                 path = self._backtrack(node)
-                return SolveResult(moves=path, attempts=attempts, visited=len(visited))
+                elapsed = time.monotonic() - started
+                return SolveResult(moves=path, attempts=attempts, visited=len(visited), solve_time=elapsed)
 
             for action in MOVES:
                 result_state, result_status = self._simulate(node.state, action)
@@ -155,7 +161,8 @@ class DFSSolver(BFSSolver):
                 child = Node(state=result_state, parent=node, action=action)
                 if result_status == "win":
                     path = self._backtrack(child)
-                    return SolveResult(moves=path, attempts=attempts + 1, visited=len(visited))
+                    elapsed = time.monotonic() - started
+                    return SolveResult(moves=path, attempts=attempts + 1, visited=len(visited), solve_time=elapsed)
                 if result_status != "lose":
                     frontier.add(child)
 
