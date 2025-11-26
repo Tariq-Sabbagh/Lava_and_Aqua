@@ -4,7 +4,7 @@ import pygame
 
 from src.factory import GameFactory
 from src.renderer import GameRenderer, play_with_renderer
-from src.solver import BFSSolver
+from src.solver import BFSSolver, DFSSolver
 from src.session import GameSession
 
 def print_board(board):
@@ -71,18 +71,22 @@ def main():
         return
 
     mode = input("Play yourself or let BFS solve? (p = play / a = auto): ").strip().lower()
+    solver_kind = "bfs"
     use_renderer = False
     if mode == "p":
         use_renderer = input("Run with Pygame renderer? (y/N): ").strip().lower() == "y"
     factory = GameFactory()
     if mode == "a":
-        solver = BFSSolver(factory, level)
+        solver_choice = input("Choose solver (b = BFS / d = DFS): ").strip().lower()
+        solver_kind = "dfs" if solver_choice == "d" else "bfs"
+        solver = DFSSolver(factory, level) if solver_kind == "dfs" else BFSSolver(factory, level)
         auto_renderer = input("Show solver in Pygame? (y/N): ").strip().lower() == "y"
         solution = solver.solve()
         if solution is None:
-            print("No solution found with BFS.")
+            print(f"No solution found with {solver_kind.upper()}.")
             return
-        print(f"BFS found a solution in {len(solution.moves)} moves (attempts: {solution.attempts}, visited: {solution.visited}).")
+        label = solver_kind.upper()
+        print(f"{label} found a solution in {len(solution.moves)} moves (attempts: {solution.attempts}, visited: {solution.visited}).")
         print(" -> ".join(solution.moves))
         session = GameSession(factory, level)
         if auto_renderer:
@@ -91,7 +95,7 @@ def main():
             total_moves = len(solution.moves)
             renderer.render_with_overlay(
                 [
-                    "Solver: BFS",
+                    f"Solver: {label}",
                     f"Moves: 0/{total_moves}",
                     f"Attempts: {solution.attempts}",
                     f"Visited: {solution.visited}",
@@ -105,7 +109,7 @@ def main():
                 elapsed = time.time() - start_time
                 renderer.render_with_overlay(
                     [
-                        f"Solver: BFS",
+                        f"Solver: {label}",
                         f"Moves: {idx}/{total_moves}",
                         f"Attempts: {solution.attempts}",
                         f"Visited: {solution.visited}",
@@ -118,12 +122,12 @@ def main():
                 else:
                     renderer.render_with_overlay(
                         [
-                            f"Solver: BFS",
-                            f"Moves: {idx}/{total_moves}",
-                            f"Attempts: {solution.attempts}",
-                            f"Visited: {solution.visited}",
-                            f"Elapsed: {elapsed:.2f}s",
-                            f"Step {idx}/{len(solution.moves)}: {move}",
+                        f"Solver: {label}",
+                        f"Moves: {idx}/{total_moves}",
+                        f"Attempts: {solution.attempts}",
+                        f"Visited: {solution.visited}",
+                        f"Elapsed: {elapsed:.2f}s",
+                        f"Step {idx}/{len(solution.moves)}: {move}",
                         ]
                     )
                 if outcome.status in ("win", "lose"):
@@ -131,7 +135,7 @@ def main():
                     break
             elapsed = time.time() - start_time
             final_lines = [
-                f"Solver: BFS",
+                f"Solver: {label}",
                 f"Attempts: {solution.attempts}",
                 f"Visited: {solution.visited}",
                 f"Moves: {len(solution.moves)}/{total_moves}",
