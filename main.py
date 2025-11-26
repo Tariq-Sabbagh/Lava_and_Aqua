@@ -1,6 +1,6 @@
 import time
 
-import pygame
+import pygame # type: ignore
 
 from src.factory import GameFactory
 from src.renderer import GameRenderer, play_with_renderer
@@ -70,7 +70,7 @@ def main():
         print("invalid level number.")
         return
 
-    mode = input("Play yourself or let BFS solve? (p = play / a = auto): ").strip().lower()
+    mode = input("Play yourself or let solver? (p = play / a = auto): ").strip().lower()
     solver_kind = "bfs"
     use_renderer = False
     if mode == "p":
