@@ -1,3 +1,7 @@
+import time
+
+import pygame
+
 from src.factory import GameFactory
 from src.renderer import GameRenderer, play_with_renderer
 from src.solver import BFSSolver
@@ -83,41 +87,69 @@ def main():
         session = GameSession(factory, level)
         if auto_renderer:
             renderer = GameRenderer(session.board)
+            start_time = time.time()
+            total_moves = len(solution.moves)
             renderer.render_with_overlay(
                 [
                     "Solver: BFS",
-                    f"Path length: {len(solution.moves)}",
+                    f"Moves: 0/{total_moves}",
                     f"Attempts: {solution.attempts}",
-                    "Starting playback...",
+                    f"Visited: {solution.visited}",
+                    f"Elapsed: 0.00s",
                 ]
             )
             final_status = "ok"
             for idx, move in enumerate(solution.moves, start=1):
                 outcome = session.step(move).result
                 data = outcome.data or {}
+                elapsed = time.time() - start_time
                 renderer.render_with_overlay(
                     [
                         f"Solver: BFS",
-                        f"Path length: {len(solution.moves)}",
+                        f"Moves: {idx}/{total_moves}",
                         f"Attempts: {solution.attempts}",
+                        f"Visited: {solution.visited}",
+                        f"Elapsed: {elapsed:.2f}s",
                         f"Step {idx}/{len(solution.moves)}: {move}",
                     ]
                 )
                 if data.get("from") and data.get("to"):
                     renderer.animate_move(data["from"], data["to"])
                 else:
-                    renderer.draw_board()
+                    renderer.render_with_overlay(
+                        [
+                            f"Solver: BFS",
+                            f"Moves: {idx}/{total_moves}",
+                            f"Attempts: {solution.attempts}",
+                            f"Visited: {solution.visited}",
+                            f"Elapsed: {elapsed:.2f}s",
+                            f"Step {idx}/{len(solution.moves)}: {move}",
+                        ]
+                    )
                 if outcome.status in ("win", "lose"):
                     final_status = outcome.status
                     break
-            renderer.render_with_overlay(
-                [
-                    f"Solver: BFS",
-                    f"Path length: {len(solution.moves)}",
-                    f"Attempts: {solution.attempts}",
-                    f"Finished with status: {final_status}",
-                ]
-            )
+            elapsed = time.time() - start_time
+            final_lines = [
+                f"Solver: BFS",
+                f"Attempts: {solution.attempts}",
+                f"Visited: {solution.visited}",
+                f"Moves: {len(solution.moves)}/{total_moves}",
+                f"Elapsed: {elapsed:.2f}s",
+                f"Finished with status: {final_status}",
+            ]
+            renderer.render_with_overlay(final_lines)
+            if final_status == "win":
+                display_for = 180  # seconds
+                end_start = time.time()
+                while time.time() - end_start < display_for:
+                    remaining = int(display_for - (time.time() - end_start))
+                    renderer.render_with_overlay(final_lines + [f"Closing in: {remaining}s"])
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            display_for = 0
+                            break
+                    renderer.tick()
             renderer.close()
         else:
             for move in solution.moves:

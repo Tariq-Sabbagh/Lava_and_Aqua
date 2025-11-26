@@ -27,8 +27,6 @@ class SolveResult:
 
 
 class StackFrontier:
-    """LIFO frontier; useful for DFS."""
-
     def __init__(self):
         self._stack: List[Node] = []
 
@@ -45,8 +43,6 @@ class StackFrontier:
 
 
 class QueueFrontier(StackFrontier):
-    """FIFO frontier; used for BFS."""
-
     def remove(self) -> Node:
         if self.empty():
             raise Exception("empty frontier")
@@ -54,8 +50,6 @@ class QueueFrontier(StackFrontier):
 
 
 class BFSSolver:
-    """Breadth-first search solver that uses the existing game rules."""
-
     def __init__(self, factory: GameFactory, level_number: int):
         self.factory = factory
         self.level_number = level_number
