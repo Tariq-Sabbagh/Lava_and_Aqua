@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
-from typing import Iterable, List, Optional
+from typing import Callable, Iterable, List, Optional
 import time
 
 from src.factory import GameFactory
@@ -25,6 +25,7 @@ class SolveResult:
     attempts: int
     visited: int
     solve_time: float
+    generated: int
 
 
 class StackFrontier:
@@ -55,7 +56,11 @@ class BFSSolver:
         self.factory = factory
         self.level_number = level_number
 
-    def solve(self) -> SolveResult | None:
+    def solve(
+        self,
+        on_progress: Callable[[dict], None] | None = None,
+        progress_interval: int = 100,
+    ) -> SolveResult | None:
         context = self.factory.create(self.level_number)
         start_state = copy.deepcopy(context.board.state)
         started = time.monotonic()
@@ -65,15 +70,32 @@ class BFSSolver:
         frontier.add(start)
         visited = {start_state.signature()}
         attempts = 0
+        generated = 0
 
         while not frontier.empty():
             node = frontier.remove()
             attempts += 1
+            if on_progress and attempts % max(1, progress_interval) == 0:
+                elapsed = time.monotonic() - started
+                on_progress(
+                    {
+                        "attempts": attempts,
+                        "visited": len(visited),
+                        "elapsed": elapsed,
+                        "generated": generated,
+                    }
+                )
             status, _ = self._is_goal(node.state)
             if status == "win":
                 path = self._backtrack(node)
                 elapsed = time.monotonic() - started
-                return SolveResult(moves=path, attempts=attempts, visited=len(visited), solve_time=elapsed)
+                return SolveResult(
+                    moves=path,
+                    attempts=attempts,
+                    visited=len(visited),
+                    solve_time=elapsed,
+                    generated=generated,
+                )
 
             for action in MOVES:
                 result_state, result_status = self._simulate(node.state, action)
@@ -83,12 +105,20 @@ class BFSSolver:
                 if sig in visited:
                     continue
                 visited.add(sig)
+                generated += 1
                 child = Node(state=result_state, parent=node, action=action)
                 if result_status == "win":
                     path = self._backtrack(child)
                     elapsed = time.monotonic() - started
-                    return SolveResult(moves=path, attempts=attempts + 1, visited=len(visited), solve_time=elapsed)
+                    return SolveResult(
+                        moves=path,
+                        attempts=attempts + 1,
+                        visited=len(visited),
+                        solve_time=elapsed,
+                        generated=generated + 1,
+                    )
                 if result_status != "lose":
+                    generated += 1
                     frontier.add(child)
 
         return None
@@ -130,7 +160,11 @@ class BFSSolver:
 
 
 class DFSSolver(BFSSolver):
-    def solve(self) -> SolveResult | None:
+    def solve(
+        self,
+        on_progress: Callable[[dict], None] | None = None,
+        progress_interval: int = 100,
+    ) -> SolveResult | None:
         context = self.factory.create(self.level_number)
         start_state = copy.deepcopy(context.board.state)
         started = time.monotonic()
@@ -140,15 +174,32 @@ class DFSSolver(BFSSolver):
         frontier.add(start)
         visited = {start_state.signature()}
         attempts = 0
+        generated = 0
 
         while not frontier.empty():
             node = frontier.remove()
             attempts += 1
+            if on_progress and attempts % max(1, progress_interval) == 0:
+                elapsed = time.monotonic() - started
+                on_progress(
+                    {
+                        "attempts": attempts,
+                        "visited": len(visited),
+                        "elapsed": elapsed,
+                        "generated": generated,
+                    }
+                )
             status, _ = self._is_goal(node.state)
             if status == "win":
                 path = self._backtrack(node)
                 elapsed = time.monotonic() - started
-                return SolveResult(moves=path, attempts=attempts, visited=len(visited), solve_time=elapsed)
+                return SolveResult(
+                    moves=path,
+                    attempts=attempts,
+                    visited=len(visited),
+                    solve_time=elapsed,
+                    generated=generated,
+                )
 
             for action in MOVES:
                 result_state, result_status = self._simulate(node.state, action)
@@ -158,12 +209,20 @@ class DFSSolver(BFSSolver):
                 if sig in visited:
                     continue
                 visited.add(sig)
+                generated += 1
                 child = Node(state=result_state, parent=node, action=action)
                 if result_status == "win":
                     path = self._backtrack(child)
                     elapsed = time.monotonic() - started
-                    return SolveResult(moves=path, attempts=attempts + 1, visited=len(visited), solve_time=elapsed)
+                    return SolveResult(
+                        moves=path,
+                        attempts=attempts + 1,
+                        visited=len(visited),
+                        solve_time=elapsed,
+                        generated=generated + 1,
+                    )
                 if result_status != "lose":
+                    generated += 1
                     frontier.add(child)
 
         return None

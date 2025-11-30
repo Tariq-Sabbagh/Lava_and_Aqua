@@ -88,7 +88,7 @@ def main():
         label = solver_kind.upper()
         print(
             f"{label} found a solution in {len(solution.moves)} moves "
-            f"(attempts: {solution.attempts}, visited: {solution.visited}, solve time: {solution.solve_time:.2f}s)."
+            f"(attempts: {solution.attempts}, visited: {solution.visited}, generated: {solution.generated}, solve time: {solution.solve_time:.2f}s)."
         )
         print(" -> ".join(solution.moves))
         session = GameSession(factory, level)
@@ -102,6 +102,7 @@ def main():
                     f"Moves: 0/{total_moves}",
                     f"Attempts: {solution.attempts}",
                     f"Visited: {solution.visited}",
+                    f"Generated: {solution.generated}",
                     f"Solved in: {solution.solve_time:.2f}s",
                     f"Elapsed: 0.00s",
                 ]
@@ -117,6 +118,7 @@ def main():
                         f"Moves: {idx}/{total_moves}",
                         f"Attempts: {solution.attempts}",
                         f"Visited: {solution.visited}",
+                        f"Generated: {solution.generated}",
                         f"Solved in: {solution.solve_time:.2f}s",
                         f"Elapsed: {elapsed:.2f}s",
                         f"Step {idx}/{len(solution.moves)}: {move}",
@@ -131,6 +133,7 @@ def main():
                         f"Moves: {idx}/{total_moves}",
                         f"Attempts: {solution.attempts}",
                         f"Visited: {solution.visited}",
+                        f"Generated: {solution.generated}",
                         f"Solved in: {solution.solve_time:.2f}s",
                         f"Elapsed: {elapsed:.2f}s",
                         f"Step {idx}/{len(solution.moves)}: {move}",
@@ -144,6 +147,7 @@ def main():
                 f"Solver: {label}",
                 f"Attempts: {solution.attempts}",
                 f"Visited: {solution.visited}",
+                f"Generated: {solution.generated}",
                 f"Moves: {len(solution.moves)}/{total_moves}",
                 f"Solved in: {solution.solve_time:.2f}s",
                 f"Elapsed: {elapsed:.2f}s",
