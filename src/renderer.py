@@ -1,9 +1,10 @@
+import random
 import time
 from dataclasses import dataclass
 from typing import Tuple
 
 try:
-    import pygame # type: ignore
+    import pygame  # type: ignore
 except ModuleNotFoundError as exc:  # pragma: no cover - pygame optional in tests
     raise RuntimeError(
         "pygame is required for the graphical renderer. "
@@ -52,6 +53,7 @@ class GameRenderer:
         pygame.display.set_caption("Lava & Aqua")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont("consolas", cell_size // 2, bold=True)
+        self.small_font = pygame.font.SysFont("consolas", max(12, cell_size // 3))
 
     # ------------------------------------------------------------------ Drawing
 
@@ -66,6 +68,8 @@ class GameRenderer:
                 base_symbol = symbol
                 if symbol == "O":
                     base_symbol = self.board.cell_base(r, c)
+                if symbol == "P":
+                    base_symbol = self.board.cell_base(r, c)
 
                 theme = self._theme_for_symbol(base_symbol)
                 pygame.draw.rect(self.display, theme.fill, rect)
@@ -74,6 +78,8 @@ class GameRenderer:
                 base_is_h = self.board.cell_base(r, c) == "H"
                 if symbol.isdigit():
                     self._draw_counter_value(symbol, rect)
+                if symbol == "P":
+                    self._draw_player(rect)
                 if has_orb:
                     self._draw_orb(rect)
                 if base_is_h:
@@ -161,10 +167,53 @@ class GameRenderer:
         )
 
     def _draw_symbol_at(self, symbol: str, pos: Tuple[float, float]) -> None:
+        if symbol == "P":
+            self._draw_player_at(pos)
+            return
         radius = self.cell_size * 0.35
         theme = self._theme_for_symbol(symbol)
         pygame.draw.circle(self.display, theme.fill, pos, radius)
         pygame.draw.circle(self.display, theme.border, pos, radius, width=3)
+
+    def _draw_player(self, rect: pygame.Rect) -> None:
+        center = rect.center
+        size = self.cell_size * 0.7
+        self._draw_player_icon(center, size)
+
+    def _draw_player_at(self, pos: Tuple[float, float]) -> None:
+        size = self.cell_size * 0.65
+        self._draw_player_icon(pos, size)
+
+    def _draw_player_icon(self, center: Tuple[float, float], size: float) -> None:
+        body_h = size * 0.9
+        body_w = size * 0.55
+        surf_w = int(body_w + size * 0.4)
+        surf_h = int(body_h + size * 0.6)
+        surf = pygame.Surface((surf_w, surf_h), pygame.SRCALPHA)
+
+        body_rect = pygame.Rect(
+            int((surf_w - body_w) / 2),
+            int(surf_h - body_h - size * 0.12),
+            int(body_w),
+            int(body_h),
+        )
+        player_fill = (60, 140, 255)
+        player_border = (255, 255, 255)
+
+        pygame.draw.rect(surf, player_fill, body_rect, border_radius=int(body_w / 1.8))
+        pygame.draw.rect(surf, player_border, body_rect, width=2, border_radius=int(body_w / 1.8))
+
+        visor_rect = body_rect.inflate(int(-body_w * 0.35), int(-body_h * 0.45))
+        visor_rect.y -= int(body_h * 0.18)
+        pygame.draw.rect(surf, (255, 255, 255, 230), visor_rect, border_radius=int(visor_rect.width / 2))
+        pygame.draw.rect(surf, (120, 200, 255, 230), visor_rect, width=2, border_radius=int(visor_rect.width / 2))
+
+        head_center = (surf_w // 2, int(body_rect.top - size * 0.08))
+        head_r = int(size * 0.22)
+        pygame.draw.circle(surf, player_fill, head_center, head_r)
+        pygame.draw.circle(surf, player_border, head_center, head_r, width=2)
+
+        self.display.blit(surf, (center[0] - surf_w / 2, center[1] - surf_h / 2))
 
     def _draw_h_tile(self, rect: pygame.Rect) -> None:
         gap = self.cell_size * 0.14
@@ -202,6 +251,65 @@ class GameRenderer:
         self.draw_board()
         self.draw_overlay_text(lines)
         pygame.display.flip()
+
+    def show_end_screen(self, status: str, duration: float = 2.0) -> None:
+        color = (90, 200, 140) if status == "win" else (220, 80, 80)
+        title = "YOU WIN!" if status == "win" else "YOU LOSE!"
+        subtitle = "Press any key to close" if status == "lose" else "Enjoy the victory!"
+
+        particles = [
+            {
+                "x": random.uniform(0, self.width),
+                "y": random.uniform(-self.height, 0),
+                "vx": random.uniform(-20, 20),
+                "vy": random.uniform(60, 140),
+                "size": random.uniform(3, 7),
+                "color": random.choice(
+                    [
+                        (255, 255, 255),
+                        (255, 220, 180),
+                        (200, 240, 255),
+                        (255, 210, 240),
+                    ]
+                ),
+            }
+            for _ in range(80)
+        ]
+
+        start = time.time()
+        waiting = True
+        while waiting and time.time() - start < duration:
+            self.draw_board()
+
+            overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+            overlay.fill((*color, 40))
+            self.display.blit(overlay, (0, 0))
+
+            for p in particles:
+                p["x"] += p["vx"] * 0.016
+                p["y"] += p["vy"] * 0.016
+                if p["y"] > self.height:
+                    p["y"] = random.uniform(-40, -10)
+                    p["x"] = random.uniform(0, self.width)
+                pygame.draw.rect(
+                    self.display,
+                    (*p["color"], 200),
+                    pygame.Rect(p["x"], p["y"], p["size"], p["size"]),
+                    border_radius=2,
+                )
+
+            title_surf = self.font.render(title, True, (255, 255, 255))
+            sub_surf = self.small_font.render(subtitle, True, (230, 230, 235))
+            self.display.blit(title_surf, title_surf.get_rect(center=(self.width // 2, self.height // 2 - 10)))
+            self.display.blit(sub_surf, sub_surf.get_rect(center=(self.width // 2, self.height // 2 + 26)))
+
+            for event in pygame.event.get():
+                if event.type in (pygame.QUIT, pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+                    waiting = False
+                    break
+
+            pygame.display.flip()
+            self.tick()
 
     # ---------------------------------------------------------------- Utility
 
@@ -244,7 +352,7 @@ def play_with_renderer(level: int, factory) -> None:
                 continue
             elif outcome.status in ("win", "lose"):
                 renderer.draw_board()
-                time.sleep(1.5)
+                renderer.show_end_screen(outcome.status)
                 running = False
                 continue
     finally:
