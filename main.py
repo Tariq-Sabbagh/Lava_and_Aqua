@@ -117,8 +117,7 @@ def prompt_via_terminal(levels: list[int]) -> MenuSelection | None:
     return MenuSelection(level=level, mode=mode, solver=solver_kind, use_renderer=use_renderer)
 
 
-def show_solution_with_renderer(session: GameSession, solution, label: str) -> None:
-    renderer = GameRenderer(session.board)
+def show_solution_with_renderer(renderer: GameRenderer, session: GameSession, solution, label: str) -> None:
     start_time = time.time()
     total_moves = len(solution.moves)
 
@@ -139,49 +138,73 @@ def show_solution_with_renderer(session: GameSession, solution, label: str) -> N
 
     overlay(0)
     final_status = "ok"
-    try:
-        for idx, move in enumerate(solution.moves, start=1):
-            outcome = session.step(move).result
-            data = outcome.data or {}
-            overlay(idx, f"Step {idx}/{total_moves}: {move}")
-            if data.get("from") and data.get("to"):
-                renderer.animate_move(data["from"], data["to"])
-            if outcome.status in ("win", "lose"):
-                final_status = outcome.status
-                break
+    for idx, move in enumerate(solution.moves, start=1):
+        outcome = session.step(move).result
+        data = outcome.data or {}
+        overlay(idx, f"Step {idx}/{total_moves}: {move}")
+        if data.get("from") and data.get("to"):
+            renderer.animate_move(data["from"], data["to"])
+        if outcome.status in ("win", "lose"):
+            final_status = outcome.status
+            break
 
-        elapsed = time.time() - start_time
-        final_lines = [
-            f"Solver: {label}",
-            f"Attempts: {solution.attempts}",
-            f"Visited: {solution.visited}",
-            f"Generated: {solution.generated}",
-            f"Moves: {len(solution.moves)}/{total_moves}",
-            f"Solved in: {solution.solve_time:.2f}s",
-            f"Elapsed: {elapsed:.2f}s",
-            f"Finished with status: {final_status}",
-        ]
-        renderer.render_with_overlay(final_lines)
-        if final_status == "win":
-            display_for = 180  # seconds
-            end_start = time.time()
-            while time.time() - end_start < display_for:
-                remaining = int(display_for - (time.time() - end_start))
-                renderer.render_with_overlay(final_lines + [f"Closing in: {remaining}s"])
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        display_for = 0
-                        break
-                renderer.tick()
-    finally:
-        renderer.close()
+    elapsed = time.time() - start_time
+    final_lines = [
+        f"Solver: {label}",
+        f"Attempts: {solution.attempts}",
+        f"Visited: {solution.visited}",
+        f"Generated: {solution.generated}",
+        f"Moves: {len(solution.moves)}/{total_moves}",
+        f"Solved in: {solution.solve_time:.2f}s",
+        f"Elapsed: {elapsed:.2f}s",
+        f"Finished with status: {final_status}",
+    ]
+    renderer.render_with_overlay(final_lines)
+    if final_status == "win":
+        display_for = 180  # seconds
+        end_start = time.time()
+        while time.time() - end_start < display_for:
+            remaining = int(display_for - (time.time() - end_start))
+            renderer.render_with_overlay(final_lines + [f"Closing in: {remaining}s"])
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    display_for = 0
+                    break
+            renderer.tick()
 
 
 def run_auto_mode(factory: GameFactory, selection: MenuSelection) -> None:
     solver_cls = DFSSolver if selection.solver == "dfs" else BFSSolver
     solver = solver_cls(factory, selection.level)
-    solution = solver.solve()
     label = selection.solver.upper()
+
+    if selection.use_renderer:
+        session = GameSession(factory, selection.level)
+        renderer = GameRenderer(session.board)
+
+        def on_progress(data: dict) -> None:
+            renderer.render_with_overlay(
+                [
+                    f"Solver: {label} (searching...)",
+                    f"Attempts: {data.get('attempts', 0)}",
+                    f"Visited: {data.get('visited', 0)}",
+                    f"Generated: {data.get('generated', 0)}",
+                    f"Elapsed: {data.get('elapsed', 0):.2f}s",
+                ]
+            )
+
+        try:
+            solution = solver.solve(on_progress=on_progress, progress_interval=200)
+            if solution is None:
+                renderer.render_with_overlay([f"{label} found no solution."])
+                time.sleep(1.5)
+                return
+            show_solution_with_renderer(renderer, session, solution, label)
+        finally:
+            renderer.close()
+        return
+
+    solution = solver.solve()
     if solution is None:
         print(f"No solution found with {label}.")
         return
@@ -193,10 +216,6 @@ def run_auto_mode(factory: GameFactory, selection: MenuSelection) -> None:
     print(" -> ".join(solution.moves))
 
     session = GameSession(factory, selection.level)
-    if selection.use_renderer:
-        show_solution_with_renderer(session, solution, label)
-        return
-
     for move in solution.moves:
         outcome = session.step(move).result
         print(f"Move {move}: {outcome.status}")
