@@ -21,8 +21,6 @@ class GameContext:
 
 
 class GameFactory:
-    """Creates fully-wired game components for a given level."""
-
     def __init__(self, levels_dir="levels", repository: LevelRepository | None = None):
         self.levels_dir = levels_dir
         self.repository = repository or LevelRepository(levels_dir)

@@ -276,6 +276,9 @@ class SpreadSystem:
         for pos in overlay_spawns:
             self.board.add_overlay(kind, pos)
 
+        if kind == "aqua":
+            self._block_adjacent_lava(new_walls)
+
         return SpreadEvent(
             kind=kind,
             sources=frozenset(initial_sources),
@@ -283,6 +286,17 @@ class SpreadSystem:
             hits_player=hits_player,
             new_walls=frozenset(new_walls),
         )
+
+    def _block_adjacent_lava(self, new_walls: set[Coord]) -> None:
+        wall_symbol = KIND_TO_SYMBOL["wall"]
+        for r, c in self.board.positions("aqua", include_overlays=True):
+            for nr, nc in self.board.neighbors4(r, c):
+                tile_symbol = self.board.get(nr, nc)
+                overlay_kind = self.board.overlay_kind(nr, nc)
+                tile_kind = overlay_kind or SYMBOL_TO_KIND.get(tile_symbol)
+                if tile_kind == "lava":
+                    self.board.set(nr, nc, wall_symbol)
+                    new_walls.add((nr, nc))
 
 
 class CounterSystem:
