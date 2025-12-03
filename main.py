@@ -5,7 +5,7 @@ import pygame  # type: ignore
 
 from src.factory import GameFactory
 from src.renderer import GameRenderer, play_with_renderer
-from src.solver import BFSSolver, DFSSolver
+from src.solver import BFSSolver, DFSSolver , AStarSolver
 from src.session import GameSession
 from src.start_menu import MenuSelection, StartMenu
 
@@ -117,7 +117,7 @@ def prompt_via_terminal(levels: list[int]) -> MenuSelection | None:
     return MenuSelection(level=level, mode=mode, solver=solver_kind, use_renderer=use_renderer)
 
 
-def show_solution_with_renderer(renderer: GameRenderer, session: GameSession, solution, label: str) -> None:
+def show_solution_with_renderer(renderer: GameRenderer, session: GameSession, solution, label: str) -> str:
     start_time = time.time()
     total_moves = len(solution.moves)
 
@@ -171,35 +171,47 @@ def show_solution_with_renderer(renderer: GameRenderer, session: GameSession, so
                     display_for = 0
                     break
             renderer.tick()
+    return final_status
 
 
 def run_auto_mode(factory: GameFactory, selection: MenuSelection) -> None:
-    solver_cls = DFSSolver if selection.solver == "dfs" else BFSSolver
+    if selection.solver == "dfs":
+        solver_cls = DFSSolver
+    elif selection.solver == "astar":
+        solver_cls = AStarSolver
+    else:
+        solver_cls = BFSSolver
+
     solver = solver_cls(factory, selection.level)
-    label = selection.solver.upper()
+
+    if selection.solver == "astar":
+        label = "A*"
+    else:
+        label = selection.solver.upper()
 
     if selection.use_renderer:
         session = GameSession(factory, selection.level)
         renderer = GameRenderer(session.board)
 
-        def on_progress(data: dict) -> None:
-            renderer.render_with_overlay(
-                [
-                    f"Solver: {label} (searching...)",
-                    f"Attempts: {data.get('attempts', 0)}",
-                    f"Visited: {data.get('visited', 0)}",
-                    f"Generated: {data.get('generated', 0)}",
-                    f"Elapsed: {data.get('elapsed', 0):.2f}s",
-                ]
-            )
-
         try:
-            solution = solver.solve(on_progress=on_progress, progress_interval=200)
+            renderer.render_with_overlay([f"Solver: {label} (searching for solution...)"])
+
+          
+            solution = solver.solve()
             if solution is None:
                 renderer.render_with_overlay([f"{label} found no solution."])
                 time.sleep(1.5)
                 return
-            show_solution_with_renderer(renderer, session, solution, label)
+
+            print(
+                f"{label} solution ready "
+                f"(moves: {len(solution.moves)}, attempts: {solution.attempts}, "
+                f"visited: {solution.visited}, generated: {solution.generated}, "
+                f"solve time: {solution.solve_time:.2f}s)"
+            )
+
+            final_status = show_solution_with_renderer(renderer, session, solution, label)
+            print(f"{label} playback finished with status: {final_status}")
         finally:
             renderer.close()
         return
@@ -211,7 +223,8 @@ def run_auto_mode(factory: GameFactory, selection: MenuSelection) -> None:
 
     print(
         f"{label} found a solution in {len(solution.moves)} moves "
-        f"(attempts: {solution.attempts}, visited: {solution.visited}, generated: {solution.generated}, solve time: {solution.solve_time:.2f}s)."
+        f"(attempts: {solution.attempts}, visited: {solution.visited}, "
+        f"generated: {solution.generated}, solve time: {solution.solve_time:.2f}s)."
     )
     print(" -> ".join(solution.moves))
 
@@ -222,6 +235,7 @@ def run_auto_mode(factory: GameFactory, selection: MenuSelection) -> None:
         print_board(session.board)
         if outcome.status in ("win", "lose"):
             break
+
 
 
 def run_player_mode(factory: GameFactory, selection: MenuSelection) -> None:
@@ -250,3 +264,11 @@ def main():
 
 if __name__ == '__main__':
     main()
+    # pq = PriorityQueue()
+    # pq.add(5, "B")
+    # pq.add(1, "C")
+    # pq.add(1, "A")
+
+    # while not pq.empty():
+    #     item = pq.remove()
+    #     print(item)

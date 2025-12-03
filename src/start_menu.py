@@ -9,7 +9,7 @@ import pygame  # type: ignore
 class MenuSelection:
     level: int
     mode: str  # "player" or "auto"
-    solver: str  # "bfs" or "dfs"
+    solver: str  # "bfs" or "dfs" or "astar"
     use_renderer: bool
 
 
@@ -244,6 +244,20 @@ class StartMenu:
             selected=is_auto and self.state.solver == "dfs",
             disabled=not is_auto,
         )
+        hit["solver_astar"] = self._button(
+            "A*",
+            center=(self.width // 2 + 250, y),
+            width=130,
+            height=50,
+            selected=is_auto and self.state.solver == "astar",
+            disabled=not is_auto,
+        )
+        solver_names = {
+            "bfs": "BFS – Breadth-First Search",
+            "dfs": "DFS – Depth-First Search",
+            "astar": "A* – A-star Search",
+        }
+        current = solver_names.get(self.state.solver, self.state.solver.upper())
 
         helper_text = "Auto playback uses the renderer when enabled below."
         helper = self.small_font.render(helper_text, True, self.muted)
@@ -388,4 +402,10 @@ class StartMenu:
         self.state.mode = "auto" if self.state.mode == "player" else "player"
 
     def _toggle_solver(self) -> None:
-        self.state.solver = "dfs" if self.state.solver == "bfs" else "bfs"
+
+        if self.state.solver == "bfs":
+            self.state.solver = "dfs"
+        elif self.state.solver == "dfs":
+            self.state.solver = "astar"
+        else:
+            self.state.solver = "bfs"

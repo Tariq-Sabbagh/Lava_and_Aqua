@@ -13,6 +13,15 @@ MOVES: List[Move] = ["W", "A", "S", "D"]
 
 
 @dataclass
+class AStarNode:
+    state: Any
+    parent: Optional["AStarNode"]
+    action: Optional[str]
+    g: float        # كلفة الوصول لهون (عدد الحركات مثلاً)
+    f: float        # g + h (الأولوية)
+
+
+@dataclass
 class Node:
     state: object
     parent: Optional["Node"]
@@ -49,6 +58,29 @@ class QueueFrontier(StackFrontier):
         if self.empty():
             raise Exception("empty frontier")
         return self._stack.pop(0)
+    
+
+import heapq
+from typing import Any
+
+class PriorityQueue:
+    def __init__(self) -> None:
+        self._heap: list[tuple[float, int, Any]] = []
+        self._counter: int = 0  
+
+    def add(self, priority: float, item: Any) -> None:
+        heapq.heappush(self._heap, (priority, self._counter, item))
+        self._counter += 1
+
+    def remove(self) -> Any:
+        if not self._heap:
+            raise IndexError("remove from empty PriorityQueue")
+        _, _, item = heapq.heappop(self._heap)
+        return item
+
+    def empty(self) -> bool:
+        return len(self._heap) == 0
+
 
 
 class BFSSolver:
@@ -73,8 +105,8 @@ class BFSSolver:
         generated = 0
 
         while not frontier.empty():
-            node = frontier.remove()
             attempts += 1
+            node = frontier.remove()
             if on_progress and attempts % max(1, progress_interval) == 0:
                 elapsed = time.monotonic() - started
                 on_progress(
@@ -224,5 +256,95 @@ class DFSSolver(BFSSolver):
                 if result_status != "lose":
                     generated += 1
                     frontier.add(child)
+
+        return None
+    
+
+class AStarSolver(BFSSolver):
+    def __init__(self, factory: GameFactory, level_number: int):
+        self.factory = factory
+        self.level_number = level_number
+        h = 0
+        
+    def manhattan(self ,a , b):
+        (r1, c1) = a
+        (r2, c2) = b
+        return abs(r1 - r2) + abs(c1 - c2)
+
+
+    def _heuristic(self, state: object) -> float:
+        player_positions = state.player_positions
+        player = next(iter(player_positions))
+        orbs = state.positions("orb")
+        distances: list[float] = []
+        if orbs:
+            distances = [self.manhattan(player, orb) for orb in orbs]
+        else:
+            goal_pos = state.goal_positions
+            goal = next(iter(goal_pos))
+            distances = [self.manhattan(player, goal)]
+        
+        return float(min(distances))
+
+    def solve(
+        self,
+        on_progress: Callable[[dict], None] | None = None,
+        progress_interval: int = 100,
+    ) -> SolveResult | None:
+        context = self.factory.create(self.level_number)
+        start_state = copy.deepcopy(context.board.state)
+        started = time.monotonic()
+        g_start = 0
+        h_start = self._heuristic(start_state)
+        f_start = g_start + h_start
+        start_node = AStarNode(
+            state=start_state,
+            parent=None,
+            action=None,
+            g=g_start,
+            f=f_start,
+        )
+        frontier = PriorityQueue()
+        frontier.add(f_start ,start_node )
+        start_sig = start_state.signature()
+        best_costs = {start_sig: g_start}
+        visited = {start_state.signature()}
+        attempts = 0
+        generated = 0
+        while not frontier.empty():
+            node = frontier.remove()
+            attempts += 1
+            for action in MOVES:
+                result_state, result_status = self._simulate(node.state, action)
+                if result_state is None:
+                    continue 
+                sig = result_state.signature()
+                generated += 1
+                new_g = node.g + 1
+                if sig in best_costs and new_g >= best_costs[sig]:
+                    continue
+                best_costs[sig] = new_g
+                h = self._heuristic(result_state)
+                new_f = new_g + h
+                child = AStarNode(
+                    state=result_state,
+                    parent=node,
+                    action=action,
+                    g=new_g,
+                    f=new_f,
+                )
+                if result_status == "win":
+                    path = self._backtrack(child) 
+                    elapsed = time.monotonic() - started
+                    return SolveResult(
+                        moves=path,
+                        attempts=attempts + 1,  
+                        visited=len(best_costs), 
+                        solve_time=elapsed,
+                        generated=generated + 1,
+                    )
+                if result_status != "lose":
+                    frontier.add(child.f, child)
+                
 
         return None
